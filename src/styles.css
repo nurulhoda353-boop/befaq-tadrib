@@ -1,0 +1,213 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --font-sans: "Hind Siliguri", system-ui, sans-serif;
+  --font-display: "Hind Siliguri", system-ui, sans-serif;
+  --font-arabic: "Amiri", "Scheherazade New", serif;
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-dark: var(--primary-dark);
+  --color-primary-soft: var(--primary-soft);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-gold: var(--gold);
+  --color-gold-bright: var(--gold-bright);
+  --color-gold-foreground: var(--gold-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --shadow-soft: 0 4px 20px -8px color-mix(in oklab, var(--primary) 25%, transparent);
+  --shadow-elegant: 0 20px 50px -20px color-mix(in oklab, var(--primary-dark) 40%, transparent);
+}
+
+:root {
+  --radius: 0.625rem;
+
+  /* Luxury palette: deep emerald + champagne gold + warm cream */
+  --background: oklch(0.985 0.012 90);
+  --foreground: oklch(0.20 0.03 150);
+
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.20 0.03 150);
+
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.20 0.03 150);
+
+  --primary: oklch(0.30 0.055 155);
+  --primary-foreground: oklch(0.97 0.02 85);
+  --primary-dark: oklch(0.18 0.035 155);
+  --primary-soft: oklch(0.955 0.022 90);
+
+  --secondary: oklch(0.95 0.02 90);
+  --secondary-foreground: oklch(0.22 0.04 155);
+
+  --gold: oklch(0.76 0.11 85);
+  --gold-bright: oklch(0.88 0.13 90);
+  --gold-foreground: oklch(0.22 0.04 80);
+
+  --muted: oklch(0.955 0.015 90);
+  --muted-foreground: oklch(0.46 0.02 150);
+
+  --accent: oklch(0.93 0.055 85);
+  --accent-foreground: oklch(0.24 0.045 155);
+
+  --destructive: oklch(0.55 0.22 27);
+  --destructive-foreground: oklch(0.99 0 0);
+
+  --border: oklch(0.89 0.018 85);
+  --input: oklch(0.91 0.015 85);
+  --ring: oklch(0.74 0.11 85);
+}
+
+.dark {
+  --background: oklch(0.18 0.035 155);
+  --foreground: oklch(0.96 0.02 85);
+  --card: oklch(0.22 0.04 155);
+  --card-foreground: oklch(0.96 0.02 85);
+  --popover: oklch(0.22 0.04 155);
+  --popover-foreground: oklch(0.96 0.02 85);
+  --primary: oklch(0.76 0.11 85);
+  --primary-foreground: oklch(0.18 0.035 155);
+  --primary-dark: oklch(0.97 0.02 85);
+  --primary-soft: oklch(0.26 0.045 155);
+  --secondary: oklch(0.26 0.045 155);
+  --secondary-foreground: oklch(0.96 0.02 85);
+  --muted: oklch(0.26 0.045 155);
+  --muted-foreground: oklch(0.78 0.02 90);
+  --accent: oklch(0.30 0.05 155);
+  --accent-foreground: oklch(0.96 0.02 85);
+  --border: oklch(0.32 0.04 155);
+  --input: oklch(0.30 0.04 155);
+  --ring: oklch(0.76 0.11 85);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    font-feature-settings: "ss01", "ss02";
+  }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+
+  .font-arabic {
+    font-family: var(--font-arabic);
+  }
+}
+
+@layer utilities {
+  .bg-pattern {
+    background-image:
+      radial-gradient(circle at 1px 1px, color-mix(in oklab, var(--primary) 10%, transparent) 1px, transparent 0);
+    background-size: 24px 24px;
+  }
+
+  .bg-islamic-pattern {
+    background-image: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'%3E%3Cg fill='none' stroke='%23D4AF37' stroke-width='1'%3E%3Cpath d='M40 4 L52 16 L52 28 L64 40 L52 52 L52 64 L40 76 L28 64 L28 52 L16 40 L28 28 L28 16 Z'/%3E%3Cpath d='M40 16 L48 24 L40 32 L32 24 Z'/%3E%3Cpath d='M40 48 L48 56 L40 64 L32 56 Z'/%3E%3Cpath d='M16 40 L24 32 L32 40 L24 48 Z'/%3E%3Cpath d='M48 40 L56 32 L64 40 L56 48 Z'/%3E%3Ccircle cx='40' cy='40' r='6'/%3E%3C/g%3E%3C/svg%3E");
+    background-size: 80px 80px;
+    background-repeat: repeat;
+  }
+
+  .bg-hero-luxe,
+  .bg-dark-luxe {
+    background:
+      radial-gradient(ellipse at 80% 10%, color-mix(in oklab, var(--gold) 22%, transparent) 0%, transparent 55%),
+      radial-gradient(ellipse at 10% 90%, color-mix(in oklab, var(--gold) 14%, transparent) 0%, transparent 50%),
+      linear-gradient(140deg,
+        oklch(0.16 0.035 155) 0%,
+        oklch(0.22 0.05 155) 50%,
+        oklch(0.14 0.03 155) 100%);
+  }
+
+  .bg-star-pattern {
+    background-image:
+      url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0l2.5 7.5L40 10l-7.5 2.5L30 20l-2.5-7.5L20 10l7.5-2.5L30 0zm0 40l2.5 7.5L40 50l-7.5 2.5L30 60l-2.5-7.5L20 50l7.5-2.5L30 40zM10 20l2.5 7.5L20 30l-7.5 2.5L10 40l-2.5-7.5L0 30l7.5-2.5L10 20zm40 0l2.5 7.5L60 30l-7.5 2.5L50 40l-2.5-7.5L40 30l7.5-2.5L50 20z' fill='%23D4AF37' fill-rule='evenodd'/%3E%3C/svg%3E");
+    background-repeat: repeat;
+  }
+
+
+  .text-gold-shimmer {
+    background: linear-gradient(100deg,
+      oklch(0.78 0.10 85) 0%,
+      oklch(0.92 0.08 90) 45%,
+      oklch(0.70 0.12 80) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .border-gold-hairline {
+    border-image: linear-gradient(90deg,
+      transparent,
+      color-mix(in oklab, var(--gold) 70%, transparent),
+      transparent) 1;
+  }
+
+  .text-balance { text-wrap: balance; }
+
+  @keyframes marquee {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+  .animate-marquee {
+    animation: marquee 30s linear infinite;
+  }
+  .animate-marquee:hover {
+    animation-play-state: paused;
+  }
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+/* --- Global responsive safety nets --- */
+html,
+body {
+  overflow-x: hidden;
+  max-width: 100%;
+}
+
+/* Bangla matras get visually clipped when `bg-clip-text` spans wrap
+   inside tight-leading headings. Hero h1s already use `leading-[1.5]`
+   to give the gradient text room — no extra padding needed here. */
