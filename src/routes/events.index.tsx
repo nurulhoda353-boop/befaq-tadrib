@@ -25,7 +25,7 @@ function EventsPage() {
   const { data: activeEvents = [], isLoading } = useQuery({
     queryKey: ["public-events"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("events")
         .select("*")
         .eq("status", "upcoming")
@@ -51,7 +51,7 @@ function EventsPage() {
 
   const filteredEvents = useMemo(
     () =>
-      activeEvents.filter((e) =>
+      activeEvents.filter((e: any) =>
         q ? (e.title + e.venue + e.subtitle).toLowerCase().includes(q.toLowerCase()) : true,
       ),
     [activeEvents, q],

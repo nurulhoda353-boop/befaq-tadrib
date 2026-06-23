@@ -28,7 +28,7 @@ function EventDetailsPage() {
     queryKey: ["public-event", id],
     queryFn: async () => {
       // Try to fetch by slug first, if fails try id
-      let { data, error } = await supabase
+      let { data, error } = await (supabase as any)
         .from("events")
         .select("*")
         .eq("slug", id)
@@ -38,7 +38,7 @@ function EventDetailsPage() {
         // Only try to query by id if it's a valid UUID to prevent Postgres syntax errors
         const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
         if (isUuid) {
-          const res = await supabase
+          const res = await (supabase as any)
             .from("events")
             .select("*")
             .eq("id", id)
@@ -358,7 +358,7 @@ function RegistrationPanel({ event }: { event: any }) {
     setLoading(true);
 
     try {
-      const { error } = await supabase.from("event_registrations").insert({
+      const { error } = await (supabase as any).from("event_registrations").insert({
         event_id: event.id,
         form_data: formData,
         status: "pending",

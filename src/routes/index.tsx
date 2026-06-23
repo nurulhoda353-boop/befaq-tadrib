@@ -74,8 +74,12 @@ function Home() {
     },
   });
 
-  const notices = (dbNotices && dbNotices.length > 0) ? dbNotices : staticNotices.slice(0, 5);
-  const events = (dbEvents && dbEvents.length > 0) ? dbEvents : staticEvents.slice(0, 4);
+  const notices = (dbNotices && dbNotices.length > 0)
+    ? [...dbNotices, ...staticNotices.slice(dbNotices.length)].slice(0, 5)
+    : staticNotices.slice(0, 5);
+  const events = (dbEvents && dbEvents.length > 0)
+    ? [...dbEvents, ...staticEvents.slice(dbEvents.length)].slice(0, 4)
+    : staticEvents.slice(0, 4);
 
   const featured = trainings.slice(0, 6);
 
