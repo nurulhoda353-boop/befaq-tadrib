@@ -220,7 +220,9 @@ function EventDetailsPage() {
                     </div>
                     <div>
                       <div className="text-xs font-bold uppercase tracking-wider text-white/50 mb-1">সময়</div>
-                      <div className={`text-base font-semibold ${!event.time ? "text-white/40 italic" : "text-white"}`}>{event.time || "—"}</div>
+                      <div className={`text-base font-semibold ${!(event.time || (isValidDate ? d.toLocaleTimeString("bn-BD", { hour: "2-digit", minute: "2-digit" }) : null)) ? "text-white/40 italic" : "text-white"}`}>
+                        {event.time || (isValidDate ? d.toLocaleTimeString("bn-BD", { hour: "2-digit", minute: "2-digit" }) : "—")}
+                      </div>
                     </div>
                   </div>
                   
