@@ -145,14 +145,18 @@ function NoticesPage() {
               সর্বশেষ আপডেট
             </div>
 
-              নোটিশ ও <span className="bg-gradient-to-r from-gold to-gold-bright bg-clip-text text-transparent">ঘোষণা</span> এক জায়গায়
+            <h1 className="mt-5 text-3xl font-extrabold leading-[1.4] drop-shadow-sm sm:text-4xl sm:text-5xl lg:text-6xl text-white">
+              নোটিশ ও{" "}
+              <span className="bg-gradient-to-r from-gold to-gold-bright bg-clip-text text-transparent">ঘোষণা</span>{" "}
+              এক জায়গায়
+            </h1>
 
             <p className="mt-5 max-w-xl text-base leading-relaxed text-primary-foreground/75 sm:text-lg">
               বেফাক প্রশিক্ষণ শাখার সকল ভর্তি বিজ্ঞপ্তি, রেজাল্ট, সাধারণ ঘোষণা ও আসন্ন
               উদ্বোধন-সমাপনী অনুষ্ঠানের হালনাগাদ তথ্য — দ্রুত খুঁজে নিন।
             </p>
 
-            <div className="mt-8 grid max-w-xl grid-cols-2 gap-3 sm:grid-cols-4">
+            <div className="mt-8 grid max-w-xl grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
               {[
                 { label: "মোট নোটিশ", value: `${bn(notices.length)}+` },
                 {

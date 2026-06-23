@@ -12,6 +12,7 @@ import {
   Shield,
   Home,
   Sparkles,
+  ClipboardList,
 } from "lucide-react";
 
 import {

@@ -68,7 +68,7 @@ function ContactPage() {
               <MessageCircle size={13} /> আমরা আপনার পাশে আছি
             </div>
 
-            <h1 className="mt-5 text-4xl font-extrabold leading-[1.5] drop-shadow-sm sm:text-5xl lg:text-6xl">
+            <h1 className="mt-5 text-3xl font-extrabold leading-[1.5] drop-shadow-sm sm:text-4xl sm:text-5xl lg:text-6xl">
               যেকোনো প্রশ্নে{" "}
               <span className="bg-gradient-to-r from-gold to-gold-bright bg-clip-text text-transparent">
                 সরাসরি যোগাযোগ
@@ -214,7 +214,7 @@ function ContactPage() {
         />
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gold/40 to-transparent" />
 
-        <div className="relative mx-auto grid max-w-6xl gap-10 px-4 py-16 sm:px-6 lg:grid-cols-[1fr_1.1fr]">
+        <div className="relative mx-auto grid max-w-6xl gap-8 px-4 py-12 sm:px-6 sm:py-16 lg:grid-cols-[1fr_1.1fr]">
           {/* Info panel */}
           <div>
             <h2 className="text-3xl font-extrabold sm:text-4xl">

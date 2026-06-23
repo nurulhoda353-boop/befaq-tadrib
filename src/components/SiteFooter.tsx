@@ -27,8 +27,8 @@ export function SiteFooter() {
     : staticSiteInfo;
 
   return (
-    <footer className="mt-24 bg-hero-luxe text-primary-foreground/90">
-      <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-4">
+    <footer className="mt-16 bg-hero-luxe text-primary-foreground/90 sm:mt-24">
+      <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 sm:px-6 sm:py-14 sm:grid-cols-2 md:grid-cols-4">
         <div className="md:col-span-2">
           <div className="flex items-center gap-3">
             <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-background/95 p-1">

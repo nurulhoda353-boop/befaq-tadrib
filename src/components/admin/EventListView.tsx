@@ -1,0 +1,643 @@
+import { useState, useMemo } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  Search,
+  CheckCircle2,
+  Clock,
+  MapPin,
+  Calendar,
+  XCircle,
+  Loader2,
+  Image as ImageIcon,
+} from "lucide-react";
+import { toast } from "sonner";
+import { AdminShell } from "@/components/admin/AdminShell";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { FormBuilder, FormFieldSchema } from "@/components/admin/FormBuilder";
+import { RichTextEditor } from "@/components/admin/RichTextEditor";
+
+type Status = "draft" | "upcoming" | "completed" | "cancelled";
+
+interface EventItem {
+  id: string;
+  slug: string | null;
+  title: string;
+  subtitle: string | null;
+  date: string | null;
+  time: string | null;
+  location: string | null;
+  description: string | null;
+  featured_image: string | null;
+  status: Status;
+  has_registration: boolean;
+  form_schema: FormFieldSchema[];
+  reg_prefix: string | null;
+  created_at: string;
+  show_emergency_contact?: boolean;
+  emergency_contact_title?: string | null;
+  emergency_contact_description?: string | null;
+  emergency_contact_phone1?: string | null;
+  emergency_contact_phone2?: string | null;
+}
+
+const statusMeta: Record<Status, { label: string; tone: string; icon: any }> = {
+  draft: { label: "ড্রাফট", tone: "bg-slate-500/10 text-slate-700 ring-slate-500/30", icon: Clock },
+  upcoming: { label: "আসন্ন", tone: "bg-blue-500/10 text-blue-700 ring-blue-500/30", icon: Clock },
+  completed: { label: "সম্পন্ন", tone: "bg-emerald-500/10 text-emerald-700 ring-emerald-500/30", icon: CheckCircle2 },
+  cancelled: { label: "বাতিল", tone: "bg-red-500/10 text-red-700 ring-red-500/30", icon: XCircle },
+};
+
+function fmtDate(d: string | null) {
+  if (!d) return "—";
+  return new Date(d).toLocaleString("bn-BD", {
+    day: "2-digit", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit",
+  });
+}
+
+export function EventListView({ tabs }: { tabs: React.ReactNode }) {
+  const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = useState<"published" | "drafts">("published");
+  const [search, setSearch] = useState("");
+  const [filterStatus, setFilterStatus] = useState<"all" | Status>("all");
+  const [editing, setEditing] = useState<EventItem | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [deleting, setDeleting] = useState<EventItem | null>(null);
+
+  const { data: events = [], isLoading } = useQuery({
+    queryKey: ["admin-events"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("events")
+        .select("*")
+        .order("date", { ascending: false });
+      if (error) throw error;
+      return data as unknown as EventItem[];
+    },
+  });
+
+  const filtered = useMemo(() => {
+    return events.filter((e) => {
+      // Tab filter
+      if (activeTab === "published" && e.status === "draft") return false;
+      if (activeTab === "drafts" && e.status !== "draft") return false;
+
+      // Status dropdown filter
+      if (filterStatus !== "all" && e.status !== filterStatus) return false;
+      if (search && !e.title.toLowerCase().includes(search.toLowerCase())) return false;
+      return true;
+    });
+  }, [events, search, filterStatus, activeTab]);
+
+  const deleteMut = useMutation({
+    mutationFn: async (e: EventItem) => {
+      const { error } = await supabase.from("events").delete().eq("id", e.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("ইভেন্ট মুছে ফেলা হয়েছে");
+      queryClient.invalidateQueries({ queryKey: ["admin-events"] });
+      setDeleting(null);
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  return (
+    <AdminShell
+      breadcrumb="কন্টেন্ট"
+      current="ইভেন্ট"
+      actions={
+        <button
+          onClick={() => setCreating(true)}
+          className="inline-flex h-10 items-center gap-1.5 rounded-lg bg-gradient-to-r from-primary to-primary-dark px-4 text-sm font-semibold text-primary-foreground shadow-soft transition hover:shadow-elegant"
+        >
+          <Plus size={15} /> নতুন ইভেন্ট
+        </button>
+      }
+    >
+      {tabs}
+
+      {/* Tabs */}
+      <div className="mb-6 flex space-x-2 border-b border-border/50 pb-px">
+        <button
+          onClick={() => setActiveTab("published")}
+          className={`px-4 py-2 text-sm font-semibold transition-colors relative ${
+            activeTab === "published" ? "text-primary" : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          পাবলিশড
+          {activeTab === "published" && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-t-full" />}
+        </button>
+        <button
+          onClick={() => setActiveTab("drafts")}
+          className={`px-4 py-2 text-sm font-semibold transition-colors relative ${
+            activeTab === "drafts" ? "text-primary" : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          ড্রাফটস
+          {activeTab === "drafts" && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-t-full" />}
+        </button>
+      </div>
+
+      {/* Filters */}
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="relative flex-1">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="ইভেন্টের নাম দিয়ে খুঁজুন..."
+            className="h-10 w-full rounded-lg border border-border bg-card pl-10 pr-3 text-sm outline-none transition focus:border-primary/40 focus:ring-2 focus:ring-primary/10"
+          />
+        </div>
+        <Select value={filterStatus} onValueChange={(v) => setFilterStatus(v as any)}>
+          <SelectTrigger className="h-10 w-full sm:w-44 bg-card">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">সব স্ট্যাটাস</SelectItem>
+            <SelectItem value="upcoming">আসন্ন</SelectItem>
+            <SelectItem value="completed">সম্পন্ন</SelectItem>
+            <SelectItem value="cancelled">বাতিল</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* List */}
+      <div className="overflow-hidden rounded-2xl border border-border/70 bg-card">
+        {isLoading ? (
+          <div className="flex items-center justify-center gap-2 p-12 text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" /> লোড হচ্ছে...
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="flex flex-col items-center gap-2 p-12 text-center">
+            <div className="grid h-14 w-14 place-items-center rounded-full bg-muted">
+              <Calendar className="h-6 w-6 text-muted-foreground" />
+            </div>
+            <p className="font-medium text-foreground">কোনো ইভেন্ট নেই</p>
+            <p className="text-sm text-muted-foreground">
+              উপরের "নতুন ইভেন্ট" বোতাম থেকে প্রথম ইভেন্টটি তৈরি করুন
+            </p>
+          </div>
+        ) : (
+          <ul className="divide-y divide-border/70">
+            {filtered.map((e) => {
+              const StatusIcon = statusMeta[e.status].icon;
+              return (
+                <li
+                  key={e.id}
+                  onClick={() => setEditing(e)}
+                  className="group flex cursor-pointer flex-col gap-3 p-4 transition hover:bg-muted/40 sm:flex-row sm:items-center"
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ring-1 ${statusMeta[e.status].tone}`}>
+                        <StatusIcon size={10} /> {statusMeta[e.status].label}
+                      </span>
+                      {e.has_registration && (
+                        <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ring-1 bg-gold/10 text-gold-bright ring-gold/30">
+                          রেজিস্ট্রেশন অন
+                        </span>
+                      )}
+                    </div>
+                    <h3 className="mt-1.5 truncate font-display font-bold text-foreground">{e.title}</h3>
+                    <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-muted-foreground">
+                      <span className="inline-flex items-center gap-1">
+                        <Calendar size={11} /> {fmtDate(e.date)}
+                      </span>
+                      {e.location && (
+                        <span className="inline-flex items-center gap-1">
+                          <MapPin size={11} /> {e.location}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-1" onClick={(ev) => ev.stopPropagation()}>
+                    <button
+                      type="button"
+                      onClick={() => setEditing(e)}
+                      title="Edit"
+                      className="grid h-9 w-9 place-items-center rounded-lg text-muted-foreground transition hover:bg-muted hover:text-foreground"
+                    >
+                      <Pencil size={15} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDeleting(e)}
+                      title="Delete"
+                      className="grid h-9 w-9 place-items-center rounded-lg text-destructive transition hover:bg-destructive/10"
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
+
+      <EventFormDialog
+        key={editing?.id ?? (creating ? "new" : "closed")}
+        open={creating || !!editing}
+        event={editing}
+        onClose={() => {
+          setCreating(false);
+          setEditing(null);
+        }}
+        onSaved={() => {
+          queryClient.invalidateQueries({ queryKey: ["admin-events"] });
+        }}
+      />
+
+      {/* Delete confirmation */}
+      <AlertDialog open={!!deleting} onOpenChange={(o) => !o && setDeleting(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>ইভেন্টটি মুছে ফেলবেন?</AlertDialogTitle>
+            <AlertDialogDescription>
+              <strong className="text-foreground">"{deleting?.title}"</strong> — এই ইভেন্টটি স্থায়ীভাবে মুছে যাবে।
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>বাতিল</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleting && deleteMut.mutate(deleting)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteMut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "হ্যাঁ, মুছুন"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </AdminShell>
+  );
+}
+
+// -------------------- Form Dialog --------------------
+
+function EventFormDialog({
+  open,
+  event,
+  onClose,
+  onSaved,
+}: {
+  open: boolean;
+  event: EventItem | null;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const isEdit = !!event;
+  const [title, setTitle] = useState(event?.title ?? "");
+  const [subtitle, setSubtitle] = useState(event?.subtitle ?? "");
+  const [description, setDescription] = useState(event?.description ?? "");
+  const [location, setLocation] = useState(event?.location ?? "");
+  const [featuredImage, setFeaturedImage] = useState(event?.featured_image ?? "");
+  const [status, setStatus] = useState<Status>(event?.status ?? "upcoming");
+  const [date, setDate] = useState<string>(
+    event?.date ? toLocalInput(event.date) : ""
+  );
+  
+  // Registration specific fields
+  const [hasRegistration, setHasRegistration] = useState(event?.has_registration ?? false);
+  const [regPrefix, setRegPrefix] = useState(event?.reg_prefix ?? "");
+  const [formSchema, setFormSchema] = useState<FormFieldSchema[]>(event?.form_schema ?? []);
+
+  // Emergency contact fields
+  const [showEmergencyContact, setShowEmergencyContact] = useState(event?.show_emergency_contact ?? false);
+  const [emergencyContactTitle, setEmergencyContactTitle] = useState(event?.emergency_contact_title ?? "রেজিস্ট্রেশন ফর্ম পূরণ করতে সমস্যা হচ্ছে?");
+  const [emergencyContactDescription, setEmergencyContactDescription] = useState(event?.emergency_contact_description ?? "ফরম পূরণে কোনো ধরণের অসুবিধা হলে আমাদের সাথে সরাসরি যোগাযোগ করতে পারেন।");
+  const [emergencyContactPhone1, setEmergencyContactPhone1] = useState(event?.emergency_contact_phone1 ?? "");
+  const [emergencyContactPhone2, setEmergencyContactPhone2] = useState(event?.emergency_contact_phone2 ?? "");
+
+  const [saving, setSaving] = useState(false);
+  const [submitType, setSubmitType] = useState<"draft" | "publish">("publish");
+
+  // Generate a short english slug
+  const generateSlug = (text: string) => {
+    return 'event-' + Math.random().toString(36).substring(2, 8) + '-' + Date.now().toString().slice(-3);
+  };
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!title.trim()) {
+      toast.error("শিরোনাম দিন");
+      return;
+    }
+    setSaving(true);
+
+    const newStatus = submitType === "draft" ? "draft" : (status === "draft" ? "upcoming" : status);
+
+    const payload = {
+      title: title.trim(),
+      subtitle: subtitle.trim() || null,
+      description: description.trim() || null,
+      location: location.trim() || null,
+      featured_image: featuredImage.trim() || null,
+      status: newStatus,
+      date: date ? new Date(date).toISOString() : null,
+      has_registration: hasRegistration,
+      reg_prefix: regPrefix.trim() || null,
+      form_schema: formSchema,
+      slug: isEdit ? event.slug : generateSlug(title), // Only generate new slug if creating
+      show_emergency_contact: showEmergencyContact,
+      emergency_contact_title: emergencyContactTitle.trim() || null,
+      emergency_contact_description: emergencyContactDescription.trim() || null,
+      emergency_contact_phone1: emergencyContactPhone1.trim() || null,
+      emergency_contact_phone2: emergencyContactPhone2.trim() || null,
+    };
+
+    try {
+      if (isEdit && event) {
+        const { error } = await supabase.from("events").update(payload as any).eq("id", event.id);
+        if (error) throw error;
+        toast.success(submitType === "draft" ? "ড্রাফট আপডেট হয়েছে" : "ইভেন্ট আপডেট হয়েছে");
+      } else {
+        const { error } = await supabase.from("events").insert(payload as any);
+        if (error) throw error;
+        toast.success(submitType === "draft" ? "ড্রাফট সেভ হয়েছে" : "ইভেন্ট তৈরি হয়েছে");
+      }
+      onSaved();
+      onClose();
+    } catch (err: any) {
+      toast.error(err.message ?? "সংরক্ষণ ব্যর্থ");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-4xl p-0">
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-card/80 px-6 py-4 backdrop-blur-xl">
+          <DialogTitle className="font-display text-xl text-foreground">
+            {isEdit ? "ইভেন্ট এডিট করুন" : "নতুন ইভেন্ট তৈরি করুন"}
+          </DialogTitle>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-6 pt-2">
+          <div className="grid gap-8 lg:grid-cols-5">
+            {/* Left Column - Main Details */}
+            <div className="space-y-6 lg:col-span-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="title" className="text-foreground">ইভেন্টের নাম (Title) *</Label>
+                <input
+                  id="title"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  maxLength={200}
+                  className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none focus:border-gold focus:ring-1 focus:ring-gold"
+                  placeholder="যেমন: জাতীয় শিক্ষক সেমিনার ২০২৬"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="subtitle" className="text-muted-foreground">সাবটাইটেল (Subtitle)</Label>
+                <input
+                  id="subtitle"
+                  value={subtitle}
+                  onChange={(e) => setSubtitle(e.target.value)}
+                  maxLength={250}
+                  className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none focus:border-gold focus:ring-1 focus:ring-gold"
+                  placeholder="যেমন: শিক্ষকদের দক্ষতা উন্নয়ন কর্মসূচি"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="desc" className="text-foreground">বিস্তারিত বিবরণ (Description)</Label>
+                <RichTextEditor
+                  value={description}
+                  onChange={setDescription}
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="location">স্থান / ঠিকানা (Location)</Label>
+                <input
+                  id="location"
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none focus:border-gold focus:ring-1 focus:ring-gold"
+                  placeholder="যেমন: কাজলা, যাত্রাবাড়ী, ঢাকা"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="image">কভার ছবির লিংক (Image URL)</Label>
+                <div className="flex gap-2">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-border bg-muted text-muted-foreground">
+                    <ImageIcon size={18} />
+                  </div>
+                  <input
+                    id="image"
+                    value={featuredImage}
+                    onChange={(e) => setFeaturedImage(e.target.value)}
+                    className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none focus:border-gold focus:ring-1 focus:ring-gold"
+                    placeholder="https://..."
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Right Column - Settings & Registration */}
+            <div className="space-y-6 lg:col-span-2">
+              <div className="rounded-xl border border-border bg-muted/20 p-4 space-y-4">
+                <h4 className="font-semibold text-foreground text-sm flex items-center gap-2">
+                  <Clock size={16} className="text-gold" /> সময় ও স্ট্যাটাস
+                </h4>
+                
+                <div className="space-y-1.5">
+                  <Label htmlFor="date">তারিখ ও সময়</Label>
+                  <input
+                    id="date"
+                    type="datetime-local"
+                    value={date}
+                    onChange={(e) => setDate(e.target.value)}
+                    className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none focus:border-gold focus:ring-1 focus:ring-gold"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>স্ট্যাটাস</Label>
+                  <Select value={status} onValueChange={(v) => setStatus(v as Status)}>
+                    <SelectTrigger className="bg-background focus:ring-gold">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="upcoming">আসন্ন (Upcoming)</SelectItem>
+                      <SelectItem value="completed">সম্পন্ন (Completed)</SelectItem>
+                      <SelectItem value="cancelled">বাতিল (Cancelled)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-gold/30 bg-gold/5 p-4 space-y-4">
+                <h4 className="font-semibold text-gold-bright text-sm flex items-center gap-2">
+                  <CheckCircle2 size={16} /> রেজিস্ট্রেশন সেটিংস
+                </h4>
+                
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="has-reg" className="cursor-pointer text-sm font-medium">
+                    রেজিস্ট্রেশন চালু করুন
+                  </Label>
+                  <Switch
+                    id="has-reg"
+                    checked={hasRegistration}
+                    onCheckedChange={setHasRegistration}
+                  />
+                </div>
+
+                {hasRegistration && (
+                  <>
+                    <div className="space-y-1.5 animate-in fade-in slide-in-from-top-2">
+                      <Label htmlFor="prefix" className="text-xs">রেজিস্ট্রেশন আইডি প্রিফিক্স (Prefix)</Label>
+                      <input
+                        id="prefix"
+                        value={regPrefix}
+                        onChange={(e) => setRegPrefix(e.target.value.toUpperCase())}
+                        className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm outline-none focus:border-gold"
+                        placeholder="যেমন: BEFAQ24"
+                      />
+                      <p className="text-[10px] text-muted-foreground">ইউজারদের কনফার্মেশন আইডির শুরুতে এটি যুক্ত হবে (e.g. BEFAQ24-001)</p>
+                    </div>
+
+                    <div className="space-y-3 pt-4 border-t border-gold/10 animate-in fade-in slide-in-from-top-2">
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="show-emergency" className="cursor-pointer text-xs font-semibold">
+                          জরুরি যোগাযোগ কার্ড দেখান
+                        </Label>
+                        <Switch
+                          id="show-emergency"
+                          checked={showEmergencyContact}
+                          onCheckedChange={setShowEmergencyContact}
+                        />
+                      </div>
+                      
+                      {showEmergencyContact && (
+                        <div className="space-y-3 pt-2 animate-in fade-in slide-in-from-top-1">
+                          <div className="space-y-1.5">
+                            <Label htmlFor="emergency-title" className="text-xs font-semibold">কার্ডের শিরোনাম (Title)</Label>
+                            <input
+                              id="emergency-title"
+                              value={emergencyContactTitle}
+                              onChange={(e) => setEmergencyContactTitle(e.target.value)}
+                              className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm outline-none focus:border-gold"
+                              placeholder="রেজিস্ট্রেশন ফর্ম পূরণ করতে সমস্যা হচ্ছে?"
+                            />
+                          </div>
+                          
+                          <div className="space-y-1.5">
+                            <Label htmlFor="emergency-desc" className="text-xs font-semibold">সংক্ষিপ্ত বিবরণ (Description)</Label>
+                            <textarea
+                              id="emergency-desc"
+                              value={emergencyContactDescription}
+                              onChange={(e) => setEmergencyContactDescription(e.target.value)}
+                              rows={2}
+                              className="w-full rounded-md border border-border bg-background p-2 text-sm outline-none focus:border-gold"
+                              placeholder="ফরম পূরণে কোনো ধরণের অসুবিধা হলে আমাদের সাথে সরাসরি যোগাযোগ করতে পারেন।"
+                            />
+                          </div>
+
+                          <div className="space-y-1.5">
+                            <Label htmlFor="emergency-phone1" className="text-xs font-semibold">ফোন নাম্বার ১ (WhatsApp সহ)</Label>
+                            <input
+                              id="emergency-phone1"
+                              value={emergencyContactPhone1}
+                              onChange={(e) => setEmergencyContactPhone1(e.target.value)}
+                              className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm outline-none focus:border-gold"
+                              placeholder="017XXXXXXXX"
+                            />
+                          </div>
+
+                          <div className="space-y-1.5">
+                            <Label htmlFor="emergency-phone2" className="text-xs font-semibold">ফোন নাম্বার ২ (WhatsApp সহ)</Label>
+                            <input
+                              id="emergency-phone2"
+                              value={emergencyContactPhone2}
+                              onChange={(e) => setEmergencyContactPhone2(e.target.value)}
+                              className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm outline-none focus:border-gold"
+                              placeholder="018XXXXXXXX"
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Form Builder Section - Full Width */}
+          {hasRegistration && (
+            <div className="mt-8 pt-8 border-t border-border animate-in fade-in">
+              <FormBuilder fields={formSchema} onChange={setFormSchema} />
+            </div>
+          )}
+
+          <div className="sticky bottom-0 mt-8 flex items-center justify-end gap-3 border-t border-border bg-card/80 px-6 py-4 backdrop-blur-xl -mx-6 -mb-6">
+            <button
+              type="button"
+              onClick={onClose}
+              className="h-10 rounded-lg border border-border bg-background px-4 text-sm font-medium text-foreground transition hover:bg-muted"
+            >
+              বাতিল
+            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="submit"
+                onClick={() => setSubmitType("draft")}
+                disabled={saving}
+                className="h-10 rounded-lg border border-border bg-muted px-4 text-sm font-semibold text-foreground transition hover:bg-muted/80 disabled:opacity-50"
+              >
+                ড্রাফট হিসেবে সেভ করুন
+              </button>
+              <button
+                type="submit"
+                onClick={() => setSubmitType("publish")}
+                disabled={saving}
+                className="inline-flex h-10 items-center gap-1.5 rounded-lg bg-gold px-6 text-sm font-bold text-gold-foreground shadow-soft transition hover:brightness-110 disabled:opacity-60"
+              >
+                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 size={15} />}
+                {isEdit && status !== "draft" ? "আপডেট করুন" : "পাবলিশ করুন"}
+              </button>
+            </div>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function toLocalInput(iso: string) {
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}

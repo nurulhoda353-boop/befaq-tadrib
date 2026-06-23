@@ -1,11 +1,9 @@
-// @ts-nocheck
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
-import { events as staticEvents } from "@/lib/data";
-import { ArrowRight, Calendar, MapPin, Search, Sparkles, Tag, X } from "lucide-react";
+import { ArrowRight, Calendar, MapPin, Search, Sparkles, Tag, X, Clock } from "lucide-react";
 import { useMemo, useState } from "react";
 
 export const Route = createFileRoute("/events/")({
@@ -24,33 +22,37 @@ const bn = (n: number | string) =>
 function EventsPage() {
   const [q, setQ] = useState("");
 
-  const { data: dbEvents } = useQuery({
+  const { data: activeEvents = [], isLoading } = useQuery({
     queryKey: ["public-events"],
     queryFn: async () => {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("events")
         .select("*")
         .eq("status", "upcoming")
         .order("date", { ascending: true });
       if (error) throw error;
-      return (data as any[]).map((e: any) => ({
+      
+      return data.map((e: any) => ({
         id: e.id,
+        slug: e.slug || e.id,
         title: e.title,
-        venue: e.location || "",
-        type: e.description || "ইভেন্ট",
+        subtitle: e.subtitle,
+        venue: e.location || "স্থান নির্ধারিত নয়",
+        type: "ইভেন্ট", // we don't have 'type' column anymore, can just use 'ইভেন্ট'
         date: e.date
           ? new Date(e.date).toLocaleDateString("bn-BD", { day: "2-digit", month: "short", year: "numeric" })
           : "শীঘ্রই",
+        time: e.time || (e.date ? new Date(e.date).toLocaleTimeString("bn-BD", { hour: "2-digit", minute: "2-digit" }) : null),
+        hasRegistration: e.has_registration,
+        featuredImage: e.featured_image,
       }));
     },
   });
 
-  const activeEvents = (dbEvents && dbEvents.length > 0) ? dbEvents : staticEvents;
-
   const filteredEvents = useMemo(
     () =>
       activeEvents.filter((e) =>
-        q ? (e.title + e.venue + e.type).toLowerCase().includes(q.toLowerCase()) : true,
+        q ? (e.title + e.venue + e.subtitle).toLowerCase().includes(q.toLowerCase()) : true,
       ),
     [activeEvents, q],
   );
@@ -84,7 +86,7 @@ function EventsPage() {
               ইভেন্ট ক্যালেন্ডার
             </div>
 
-            <h1 className="mt-5 text-4xl font-extrabold leading-[1.5] drop-shadow-sm sm:text-5xl lg:text-6xl">
+            <h1 className="mt-5 text-3xl font-extrabold leading-[1.5] drop-shadow-sm sm:text-4xl sm:text-5xl lg:text-6xl">
               আসন্ন সকল <span className="text-gold-bright">সেমিনার ও কর্মশালা</span>
             </h1>
 
@@ -110,22 +112,42 @@ function EventsPage() {
 
             {upcoming && (
               <div className="relative z-20 w-full max-w-sm scale-105 rounded-2xl border-2 border-gold/50 bg-primary/80 p-6 shadow-2xl shadow-gold/20 backdrop-blur-md">
-                <div className="flex items-center gap-2 text-xs font-semibold text-gold-bright">
-                  <Sparkles size={14} /> পরবর্তী ইভেন্ট
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2 text-xs font-semibold text-gold-bright">
+                    <Sparkles size={14} /> পরবর্তী ইভেন্ট
+                  </div>
+                  {upcoming.hasRegistration && (
+                    <span className="bg-emerald-500/20 text-emerald-400 text-[10px] font-bold px-2 py-0.5 rounded-full ring-1 ring-emerald-500/50">রেজিস্ট্রেশন চলছে</span>
+                  )}
                 </div>
-                <h3 className="mt-3 text-lg font-bold leading-snug text-white">
+                
+                {upcoming.featuredImage && (
+                  <img src={upcoming.featuredImage} alt={upcoming.title} className="w-full h-32 object-cover rounded-xl mb-4 border border-white/10" />
+                )}
+
+                <h3 className="text-lg font-bold leading-snug text-white">
                   {upcoming.title}
                 </h3>
+                {upcoming.subtitle && <p className="text-xs text-white/60 mt-1">{upcoming.subtitle}</p>}
+                
                 <div className="mt-4 space-y-2 text-sm text-primary-foreground/70">
                   <div className="flex items-center gap-2">
                     <Calendar size={15} className="text-gold-bright" />
                     <span>{upcoming.date}</span>
+                    {upcoming.time && <span className="ml-1 opacity-75 text-xs">({upcoming.time})</span>}
                   </div>
                   <div className="flex items-center gap-2">
                     <MapPin size={15} className="text-gold-bright" />
                     <span className="truncate">{upcoming.venue}</span>
                   </div>
                 </div>
+                <Link
+                  to="/events/$id"
+                  params={{ id: upcoming.slug }}
+                  className="mt-4 block text-center w-full bg-white/10 hover:bg-white/20 text-white font-semibold text-sm py-2 rounded-lg transition"
+                >
+                  বিস্তারিত দেখুন
+                </Link>
               </div>
             )}
           </div>
@@ -161,7 +183,15 @@ function EventsPage() {
           </div>
 
           <div className="mt-8">
-            {renderEventFeed(filteredEvents)}
+            {isLoading ? (
+              <div className="space-y-6 animate-pulse">
+                <div className="h-48 rounded-3xl bg-muted/40"></div>
+                <div className="h-32 rounded-2xl bg-muted/20"></div>
+                <div className="h-32 rounded-2xl bg-muted/20"></div>
+              </div>
+            ) : (
+              renderEventFeed(filteredEvents)
+            )}
           </div>
         </div>
       </section>
@@ -206,38 +236,61 @@ function FeaturedEvent({ e }: { e: any }) {
         className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-gold/10 blur-3xl"
       />
       <div className="relative grid gap-6 sm:grid-cols-[auto_1fr] sm:items-center">
-        <div className="flex h-24 w-24 flex-col items-center justify-center rounded-2xl bg-gold text-gold-foreground shadow-lg shadow-gold/30">
-          <Calendar size={28} />
-          <span className="mt-1 text-xs font-bold">পরবর্তী</span>
-        </div>
+        {e.featuredImage ? (
+           <img src={e.featuredImage} alt={e.title} className="h-32 w-32 rounded-2xl object-cover shadow-lg shadow-gold/20" />
+        ) : (
+          <div className="flex h-24 w-24 flex-col items-center justify-center rounded-2xl bg-gold text-gold-foreground shadow-lg shadow-gold/30">
+            <Calendar size={28} />
+            <span className="mt-1 text-xs font-bold">পরবর্তী</span>
+          </div>
+        )}
+        
         <div>
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-gold px-3 py-1 text-xs font-bold text-gold-foreground shadow">
-            <Sparkles size={12} /> আসন্ন ইভেন্ট
-          </span>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-gold px-3 py-1 text-xs font-bold text-gold-foreground shadow">
+              <Sparkles size={12} /> আসন্ন ইভেন্ট
+            </span>
+            {e.hasRegistration && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-3 py-1 text-[11px] font-bold text-emerald-700 ring-1 ring-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-400">
+                রেজিস্ট্রেশন চলছে
+              </span>
+            )}
+          </div>
+
           <h2 className="mt-3 text-2xl font-extrabold leading-snug text-primary-dark sm:text-3xl">
             {e.title}
           </h2>
+          {e.subtitle && <p className="mt-1 text-sm font-medium text-muted-foreground">{e.subtitle}</p>}
+          
           <dl className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
             <div className="flex items-center gap-2">
               <Calendar size={15} className="text-gold" />
-              <span className="font-semibold text-foreground">{e.date}</span>
+              <span className="font-semibold text-foreground">{e.date} {e.time && <span className="text-xs font-normal opacity-70">({e.time})</span>}</span>
             </div>
             <div className="flex items-center gap-2">
               <MapPin size={15} className="text-gold" />
               <span>{e.venue}</span>
             </div>
-            <div className="flex items-center gap-2">
-              <Tag size={15} className="text-gold" />
-              <span>{e.type}</span>
-            </div>
           </dl>
-          <Link
-            to="/events/$id"
-            params={{ id: e.id }}
-            className="mt-6 inline-flex items-center gap-2 rounded-lg bg-gold px-5 py-3 text-sm font-bold text-gold-foreground transition hover:brightness-110"
-          >
-            বিস্তারিত দেখুন <ArrowRight size={15} />
-          </Link>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Link
+              to="/events/$id"
+              params={{ id: e.slug }}
+              className="inline-flex items-center gap-2 rounded-lg bg-gold px-5 py-3 text-sm font-bold text-gold-foreground transition hover:brightness-110"
+            >
+              বিস্তারিত দেখুন <ArrowRight size={15} />
+            </Link>
+            {e.hasRegistration && (
+              <Link
+                to="/events/$id"
+                params={{ id: e.slug }}
+                hash="registration"
+                className="inline-flex items-center gap-2 rounded-lg border-2 border-gold/40 bg-card px-5 py-3 text-sm font-bold text-gold transition hover:bg-gold/5"
+              >
+                রেজিস্ট্রেশন করুন
+              </Link>
+            )}
+          </div>
         </div>
       </div>
     </article>
@@ -258,9 +311,11 @@ function SecondaryEvent({ e }: { e: any }) {
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2 text-xs">
             <span className="font-semibold text-gold-bright">এরপর</span>
-            <span className="inline-flex items-center gap-1 rounded-full border border-border bg-muted px-2 py-0.5 font-semibold text-muted-foreground">
-              <Tag size={11} /> {e.type}
-            </span>
+            {e.hasRegistration && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 font-bold text-emerald-600 ring-1 ring-emerald-500/30">
+                রেজিস্ট্রেশন চলছে
+              </span>
+            )}
           </div>
           <h3 className="mt-2 text-lg font-bold leading-snug text-primary-dark transition group-hover:text-gold sm:text-xl">
             {e.title}
@@ -273,13 +328,15 @@ function SecondaryEvent({ e }: { e: any }) {
               <MapPin size={14} /> {e.venue}
             </div>
           </dl>
-          <Link
-            to="/events/$id"
-            params={{ id: e.id }}
-            className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-gold hover:underline"
-          >
-            বিস্তারিত <ArrowRight size={13} />
-          </Link>
+          <div className="mt-3 flex gap-4">
+            <Link
+              to="/events/$id"
+              params={{ id: e.slug }}
+              className="inline-flex items-center gap-1 text-sm font-semibold text-gold hover:underline"
+            >
+              বিস্তারিত <ArrowRight size={13} />
+            </Link>
+          </div>
         </div>
       </div>
     </article>
@@ -291,19 +348,20 @@ function CompactEvent({ e }: { e: any }) {
     <li>
       <Link
         to="/events/$id"
-        params={{ id: e.id }}
+        params={{ id: e.slug }}
         className="group flex items-center gap-4 px-5 py-4 transition hover:bg-muted/50"
       >
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground group-hover:bg-gold/10 group-hover:text-gold">
           <Calendar size={16} />
         </div>
         <div className="min-w-0 flex-1">
-          <div className="truncate text-sm font-semibold text-foreground group-hover:text-gold sm:text-[15px]">
-            {e.title}
+          <div className="flex items-center gap-2">
+            <span className="truncate text-sm font-semibold text-foreground group-hover:text-gold sm:text-[15px]">
+              {e.title}
+            </span>
+            {e.hasRegistration && <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 flex-shrink-0" title="রেজিস্ট্রেশন চলছে" />}
           </div>
           <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
-            <span>{e.type}</span>
-            <span>•</span>
             <span>{e.date}</span>
             <span>•</span>
             <span className="truncate">{e.venue}</span>
@@ -322,9 +380,9 @@ function EmptyState() {
   return (
     <div className="rounded-2xl border border-dashed border-border bg-card p-12 text-center">
       <Search size={32} className="mx-auto text-muted-foreground" />
-      <p className="mt-3 font-semibold text-primary-dark">কোনো ফলাফল পাওয়া যায়নি</p>
+      <p className="mt-3 font-semibold text-primary-dark">কোনো ইভেন্ট পাওয়া যায়নি</p>
       <p className="mt-1 text-sm text-muted-foreground">
-        ফিল্টার বা সার্চ পরিবর্তন করে আবার চেষ্টা করুন।
+        ফিল্টার পরিবর্তন করে দেখতে পারেন।
       </p>
     </div>
   );

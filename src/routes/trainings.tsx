@@ -84,7 +84,7 @@ function TrainingsPage() {
               বেফাক প্রশিক্ষণ শাখা
             </div>
 
-            <h1 className="mt-6 text-4xl font-extrabold leading-[1.3] tracking-tight drop-shadow-sm sm:text-5xl lg:text-6xl text-balance">
+            <h1 className="mt-6 text-3xl font-extrabold leading-[1.3] tracking-tight drop-shadow-sm sm:text-5xl lg:text-6xl text-balance sm:text-4xl">
               বিচক্ষণ উলামা গঠনে{" "}
               <span className="bg-gradient-to-r from-gold to-gold-bright bg-clip-text text-transparent drop-shadow-[0_0_15px_rgba(212,175,55,0.3)]">
                 বেফাকের
@@ -106,12 +106,12 @@ function TrainingsPage() {
             </div>
           </div>
 
-          {/* UPCOMING BATCHES BAR - Fixed Requirement (Gold Background) */}
-          <div className="mt-20 max-w-5xl mx-auto">
-            <div className="rounded-2xl border border-gold/40 bg-gradient-to-r from-[#d4af37] to-[#b5952f] p-6 shadow-2xl flex flex-col md:flex-row gap-6 items-center">
-              <div className="shrink-0 flex items-center gap-4 md:border-r md:border-dark-luxe/20 md:pr-6 w-full md:w-auto justify-center md:justify-start">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-dark-luxe text-gold-bright shadow-lg">
-                  <Calendar size={24} />
+          {/* UPCOMING BATCHES BAR */}
+          <div className="mt-16 max-w-5xl mx-auto sm:mt-20">
+            <div className="rounded-2xl border border-gold/40 bg-gradient-to-r from-[#d4af37] to-[#b5952f] p-4 shadow-2xl flex flex-col md:flex-row gap-4 items-stretch md:items-center sm:p-6">
+              <div className="shrink-0 flex items-center gap-4 md:border-r md:border-dark-luxe/20 md:pr-6 justify-center md:justify-start">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-dark-luxe text-gold-bright shadow-lg md:h-12 md:w-12">
+                  <Calendar size={20} />
                 </div>
                 <div>
                   <h3 className="text-sm font-extrabold text-dark-luxe">আসন্ন ব্যাচসমূহ</h3>
@@ -143,21 +143,21 @@ function TrainingsPage() {
       </section>
 
       {/* YEAR-ROUND TRAININGS (FIXED LIGHT PREMIUM SECTION) */}
-      <section id="running-trainings" className="w-full bg-[#FCFBF8] text-primary-dark py-24 relative overflow-hidden">
+      <section id="running-trainings" className="w-full bg-[#FCFBF8] text-primary-dark py-16 relative overflow-hidden sm:py-24">
         {/* Soft elegant glow to make it premium rather than dark/muddy */}
         <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-gold/5 rounded-full blur-[150px] pointer-events-none" />
         <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-gold/5 rounded-full blur-[150px] pointer-events-none" />
 
         <div className="mx-auto max-w-7xl px-4 sm:px-6 relative z-10">
-          <div className="text-center max-w-2xl mx-auto mb-16">
+          <div className="text-center max-w-2xl mx-auto mb-10 sm:mb-16">
             <span className="inline-flex items-center gap-1.5 rounded-full border border-gold/30 bg-gold/10 px-3 py-1 text-xs font-bold text-gold-dark">
               <Sparkles size={12} /> সারাবছর রানিং
             </span>
-            <h2 className="mt-4 text-3xl font-extrabold text-[#1a1a1a] sm:text-4xl drop-shadow-sm">বুনিয়াদি প্রশিক্ষণ ধারা</h2>
-            <p className="mt-4 text-primary-dark/70 text-lg font-medium">কেন্দ্রীয় এবং আঞ্চলিকভাবে সারা বছর জুড়ে চলমান ৭টি বেসিক প্রশিক্ষণ।</p>
+            <h2 className="mt-4 text-2xl font-extrabold text-[#1a1a1a] sm:text-3xl sm:text-4xl drop-shadow-sm">বুনিয়াদি প্রশিক্ষণ ধারা</h2>
+            <p className="mt-4 text-primary-dark/70 text-base font-medium sm:text-lg">কেন্দ্রীয় এবং আঞ্চলিকভাবে সারা বছর জুড়ে চলমান ৭টি বেসিক প্রশিক্ষণ।</p>
           </div>
 
-          <div className="grid lg:grid-cols-2 gap-10 lg:gap-16">
+          <div className="grid grid-cols-1 gap-8 sm:gap-10 lg:grid-cols-2 lg:gap-16">
             {/* Central */}
             <div className="space-y-6 flex flex-col">
               <div className="flex items-center gap-3 mb-2 pb-4 border-b border-black/5">
@@ -219,7 +219,7 @@ function TrainingsPage() {
         <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-gold/40 to-transparent" />
         
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6 z-10">
-          <div className="text-center max-w-2xl mx-auto mb-16">
+          <div className="text-center max-w-2xl mx-auto mb-10 sm:mb-16">
             <span className="inline-flex items-center gap-1.5 rounded-full border border-gold/40 bg-gold/10 px-3 py-1 text-xs font-semibold text-gold">
               <Target size={12} /> বাৎসরিক স্পেশাল ইভেন্ট
             </span>
@@ -231,16 +231,16 @@ function TrainingsPage() {
             </p>
           </div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
             {special.map(t => <SpecialTrainingCard key={t.id} t={t} />)}
           </div>
         </div>
       </section>
 
       {/* PRE-FOOTER CONTACT SECTION (LIGHT) */}
-      <section className="w-full bg-[#FCFBF8] text-primary-dark py-16 border-t border-black/5">
+      <section className="w-full bg-[#FCFBF8] text-primary-dark py-12 border-t border-black/5 sm:py-16">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
-          <div className="rounded-3xl border border-gold/20 bg-white p-8 md:p-12 shadow-[0_15px_40px_-15px_rgba(0,0,0,0.05)] relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-10 group">
+          <div className="rounded-3xl border border-gold/20 bg-white p-6 md:p-12 shadow-[0_15px_40px_-15px_rgba(0,0,0,0.05)] relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-8 group">
             {/* Background elements */}
             <div className="absolute top-0 right-0 w-64 h-64 bg-gold/5 rounded-full blur-[80px] pointer-events-none transition-transform duration-700 group-hover:scale-150" />
             <div className="absolute bottom-0 left-0 w-64 h-64 bg-primary/5 rounded-full blur-[80px] pointer-events-none transition-transform duration-700 group-hover:scale-150" />

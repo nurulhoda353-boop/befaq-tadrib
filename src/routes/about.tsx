@@ -104,7 +104,7 @@ function AboutPage() {
               <Sparkles size={14} className="text-gold" />
               <span className="text-xs font-medium tracking-wider text-gold">আমাদের পরিচিতি</span>
             </div>
-            <h1 className="font-display text-4xl font-extrabold leading-tight text-balance sm:text-6xl">
+            <h1 className="font-display text-3xl font-extrabold leading-tight text-balance sm:text-5xl sm:text-6xl">
               <span className="text-gold-shimmer">ঐতিহ্যের শিকড়ে</span>
               <br />
               <span className="text-white/95">আধুনিকতার ছোঁয়া</span>
@@ -144,11 +144,11 @@ function AboutPage() {
       </section>
 
       {/* INTRO + MISSION */}
-      <section className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
-        <div className="grid gap-12 lg:grid-cols-5">
+      <section className="mx-auto max-w-6xl px-4 py-12 sm:py-20 sm:px-6">
+        <div className="grid gap-10 lg:grid-cols-5">
           <div className="lg:col-span-3">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gold">পরিচিতি</p>
-            <h2 className="mt-3 text-3xl font-bold leading-tight text-primary-dark sm:text-4xl">
+            <h2 className="mt-3 text-2xl font-bold leading-tight text-primary-dark sm:text-3xl sm:text-4xl">
               দেশের কওমী শিক্ষার <span className="text-gold-shimmer">কেন্দ্রীয় বোর্ড</span>
             </h2>
             <p className="mt-6 text-lg leading-relaxed text-foreground/85">
@@ -239,7 +239,7 @@ function AboutPage() {
 
       {/* CTA */}
       <section className="mx-auto max-w-6xl px-4 pb-20 sm:px-6">
-        <div className="relative overflow-hidden rounded-3xl border border-gold/30 bg-dark-luxe p-10 text-center sm:p-16 text-primary-foreground shadow-[0_25px_60px_-25px_rgba(0,0,0,0.5)]">
+        <div className="relative overflow-hidden rounded-3xl border border-gold/30 bg-dark-luxe p-8 text-center sm:p-10 md:p-16 text-primary-foreground shadow-[0_25px_60px_-25px_rgba(0,0,0,0.5)]">
           <div
             className="absolute inset-0 bg-star-pattern opacity-[0.03] pointer-events-none"
             aria-hidden

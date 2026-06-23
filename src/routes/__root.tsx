@@ -49,6 +49,11 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
         <p className="mt-2 text-sm text-muted-foreground">
           কোনো একটি সমস্যা হয়েছে। আবার চেষ্টা করুন অথবা হোমপেজে ফিরুন।
         </p>
+        <div className="mt-4 p-4 bg-destructive/10 text-destructive text-left rounded-md text-xs overflow-auto max-h-32">
+          <strong>Error:</strong> {error.message}
+          <br />
+          <pre>{error.stack}</pre>
+        </div>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
             onClick={() => {

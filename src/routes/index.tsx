@@ -56,16 +56,17 @@ function Home() {
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("events")
-        .select("id, title, location, description, date")
+        .select("id, title, location, slug, date")
         .eq("status", "upcoming")
         .order("date", { ascending: true })
         .limit(4);
       if (error) throw error;
       return (data as any[]).map((e) => ({
         id: e.id,
+        slug: e.slug || e.id,
         title: e.title,
         venue: e.location || "",
-        type: e.description || "ইভেন্ট",
+        type: "ইভেন্ট",
         date: e.date
           ? new Date(e.date).toLocaleDateString("bn-BD", { day: "2-digit", month: "short", year: "numeric" })
           : "শীঘ্রই",
@@ -133,7 +134,7 @@ function Home() {
             </div>
 
             {/* Headline */}
-            <h1 className="mt-6 max-w-2xl text-balance text-4xl font-bold leading-[1.18] text-white sm:text-5xl md:text-[3.25rem]">
+            <h1 className="mt-6 max-w-2xl text-balance text-3xl font-bold leading-[1.25] text-white sm:text-4xl md:text-5xl lg:text-[3.25rem] leading-[1.3] sm:leading-[1.18]">
               ইলম, ইখলাস ও উৎকর্ষ —{" "}
               <span className="text-gold-shimmer">শিক্ষক গড়ার</span> জাতীয় প্ল্যাটফর্ম
             </h1>
@@ -165,7 +166,7 @@ function Home() {
             </div>
 
             {/* Stat strip */}
-            <div className="mt-12 grid max-w-xl grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
+            <div className="mt-10 grid max-w-xl grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-4">
               {[
                 { icon: Users, label: "প্রশিক্ষণার্থী", value: stats.trainees },
                 { icon: MapPin, label: "কেন্দ্র", value: stats.centers },
@@ -174,11 +175,11 @@ function Home() {
               ].map(({ icon: Icon, label, value }) => (
                 <div
                   key={label}
-                  className="rounded-xl border border-gold/15 bg-white/[0.04] px-3 py-4 text-center backdrop-blur-md transition hover:border-gold/35 hover:bg-white/[0.07]"
+                  className="rounded-xl border border-gold/15 bg-white/[0.04] px-2 py-3 text-center backdrop-blur-md transition hover:border-gold/35 hover:bg-white/[0.07] sm:px-3 sm:py-4"
                 >
-                  <Icon className="mx-auto mb-1.5 text-gold/80" size={18} />
-                  <div className="text-xl font-extrabold text-gold-shimmer sm:text-2xl">{value}</div>
-                  <div className="mt-0.5 text-[10px] font-medium uppercase tracking-widest text-white/60">
+                  <Icon className="mx-auto mb-1 text-gold/80" size={16} />
+                  <div className="text-lg font-extrabold text-gold-shimmer sm:text-2xl">{value}</div>
+                  <div className="mt-0.5 text-[9px] font-medium uppercase tracking-widest text-white/60 sm:text-[10px]">
                     {label}
                   </div>
                 </div>
@@ -188,11 +189,11 @@ function Home() {
 
           {/* RIGHT — live 3D Quranic visual */}
           <div className="relative lg:col-span-5">
-            <div className="relative mx-auto aspect-[4/5] w-full max-w-md lg:max-w-none">
+            <div className="relative mx-auto aspect-[4/5] w-full max-w-sm sm:max-w-md lg:max-w-none">
               {/* Gold frame offset */}
-              <div aria-hidden className="absolute -inset-3 rounded-[2rem] border border-gold/30" />
-              <div aria-hidden className="absolute -bottom-5 -right-5 hidden h-32 w-32 rounded-br-[2rem] border-b-2 border-r-2 border-gold/60 lg:block" />
-              <div aria-hidden className="absolute -top-5 -left-5 hidden h-32 w-32 rounded-tl-[2rem] border-t-2 border-l-2 border-gold/60 lg:block" />
+              <div aria-hidden className="absolute -inset-2 rounded-[1.5rem] border border-gold/30 sm:-inset-3 sm:rounded-[2rem]" />
+              <div aria-hidden className="absolute -bottom-5 -right-5 hidden h-24 w-24 rounded-br-[2rem] border-b-2 border-r-2 border-gold/60 md:block lg:h-32 lg:w-32" />
+              <div aria-hidden className="absolute -top-5 -left-5 hidden h-24 w-24 rounded-tl-[2rem] border-t-2 border-l-2 border-gold/60 md:block lg:h-32 lg:w-32" />
 
               {/* 3D canvas */}
               <div className="relative h-full w-full overflow-hidden rounded-[1.75rem] shadow-[0_40px_80px_-30px_rgba(0,0,0,0.7)] ring-1 ring-gold/20">
@@ -259,8 +260,8 @@ function Home() {
                   <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-gold">পরিচিতি</span>
                 </div>
 
-                <h2 className="text-balance text-4xl font-bold leading-[1.25] text-primary-dark lg:text-5xl">
-                  ১৯৭৮ সাল থেকে কওমী শিক্ষার <br />
+                <h2 className="text-balance text-3xl font-bold leading-[1.25] text-primary-dark sm:text-4xl lg:text-5xl">
+                  ১৯৭৮ সাল থেকে কওমী শিক্ষার{" "}
                   <span className="text-gold">মান-উৎকর্ষের অভিভাবক</span>
                 </h2>
 
@@ -280,7 +281,7 @@ function Home() {
               </div>
 
               {/* Key facts — borderless minimalist row */}
-              <dl className="grid grid-cols-2 gap-8 border-y border-gold/20 py-8 sm:grid-cols-4">
+              <dl className="grid grid-cols-2 gap-4 border-y border-gold/20 py-6 sm:grid-cols-4 sm:gap-8 sm:py-8">
                 {[
                   { k: "প্রতিষ্ঠা", v: "এপ্রিল ১৯৭৮" },
                   { k: "মাদ্রাসা", v: "২০,০০০+" },
@@ -327,9 +328,9 @@ function Home() {
                   />
                 </div>
               </div>
-              {/* Corner gold brackets */}
-              <div aria-hidden className="pointer-events-none absolute -right-6 -top-6 h-32 w-32 border-r-2 border-t-2 border-gold/40" />
-              <div aria-hidden className="pointer-events-none absolute -bottom-6 -left-6 h-32 w-32 border-b-2 border-l-2 border-gold/40" />
+              {/* Corner gold brackets — hidden on mobile to prevent overflow */}
+              <div aria-hidden className="pointer-events-none absolute -right-4 -top-4 h-20 w-20 border-r-2 border-t-2 border-gold/40 sm:-right-6 sm:-top-6 sm:h-32 sm:w-32" />
+              <div aria-hidden className="pointer-events-none absolute -bottom-4 -left-4 h-20 w-20 border-b-2 border-l-2 border-gold/40 sm:-bottom-6 sm:-left-6 sm:h-32 sm:w-32" />
               {/* Floating quote chip */}
               <div className="absolute -bottom-8 right-8 z-20 bg-primary-dark px-6 py-4 text-primary-foreground shadow-xl">
                 <p className="flex items-center gap-2 text-sm italic">
@@ -381,19 +382,19 @@ function Home() {
                 </dl>
               </div>
 
-              {/* Right — square stream cards */}
-              <div className="grid grid-cols-2 gap-3 lg:col-span-7 lg:gap-4">
+              {/* Right — stream cards (responsive grid) */}
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:col-span-7 lg:gap-4">
                 {[
-                  { n: "০১", slug: "hifz-tajweed", icon: BookOpen, t: "হিফজ ও তাজবীদ", s: "তাজবীদ • কিরাত • হিফজ", p: "কোরআন মুখস্থকরণ, শুদ্ধ তাজবীদ ও বিভিন্ন কিরাতে দক্ষতা গঠনে আধুনিক পদ্ধতিভিত্তিক নিবিড় প্রশিক্ষণ। শিক্ষকদের পাঠদান-দক্ষতা, মাখরাজ-মান ও শ্রেণিকক্ষ-ব্যবস্থাপনা উভয়ই পরিশীলিত করে তোলা হয়, যাতে শিক্ষার্থীরা ধারাবাহিকভাবে মানসম্মত শিক্ষা পায়।" },
-                  { n: "০২", slug: "noorani", icon: ScrollText, t: "নূরানী", s: "প্রাথমিক • উচ্চারণ", p: "শিশুদের প্রাথমিক কোরআন শিক্ষায় শুদ্ধ উচ্চারণ, মাখরাজ ও ধারাবাহিক পাঠদানের কার্যকর কৌশল। কোমলমতি শিক্ষার্থীদের উপযোগী শ্রেণিব্যবস্থাপনা, পাঠপরিকল্পনা ও বাস্তবমুখী মূল্যায়ন পদ্ধতির ওপর বিশেষ গুরুত্ব দিয়ে শিক্ষকদের প্রশিক্ষিত করা হয়।" },
-                  { n: "০৩", slug: "darsiyat", icon: GraduationCap, t: "দরসিয়াত", s: "ফিকহ • হাদিস • আকীদা", p: "ফিকহ, হাদিস ও আকীদাসহ মৌলিক দ্বীনি বিষয়সমূহ পাঠদানের আধুনিক, কার্যকর ও পরীক্ষিত শিক্ষাপদ্ধতি। পাঠ্যক্রম পরিকল্পনা, শ্রেণিকক্ষ-পরিচালনা ও মূল্যায়নকৌশলে শিক্ষকদের পেশাগত মান ধারাবাহিকভাবে উন্নয়নের লক্ষ্যে সাজানো প্রশিক্ষণ।" },
-                  { n: "০৪", slug: "language-literature", icon: Languages, t: "ভাষা ও সাহিত্য", s: "আরবি • উর্দু • বাংলা", p: "ত্রিভাষিক দক্ষতা — পাঠ, অনুবাদ ও রচনায় ধারাবাহিক চর্চার মাধ্যমে শিক্ষকদের পেশাগত মান উন্নয়ন। পাঠদান-ভাষার সাবলীলতা, ব্যাকরণিক শুদ্ধতা ও সাহিত্যবোধ গঠনে বিশেষ গুরুত্ব দিয়ে কার্যকর শ্রেণিচর্চার কৌশল শেখানো হয়।" },
+                  { n: "০১", slug: "hifz-tajweed", icon: BookOpen, t: "হিফজ ও তাজবীদ", s: "তাজবীদ • কিরাত • হিফজ", p: "কোরআন মুখস্থকরণ, শুদ্ধ তাজবীদ ও বিভিন্ন কিরাতে দক্ষতা গঠনে আধুনিক পদ্ধতিভিত্তিক নিবিড় প্রশিক্ষণ।" },
+                  { n: "০২", slug: "noorani", icon: ScrollText, t: "নূরানী", s: "প্রাথমিক • উচ্চারণ", p: "শিশুদের প্রাথমিক কোরআন শিক্ষায় শুদ্ধ উচ্চারণ, মাখরাজ ও ধারাবাহিক পাঠদানের কার্যকর কৌশল।" },
+                  { n: "০৩", slug: "darsiyat", icon: GraduationCap, t: "দরসিয়াত", s: "ফিকহ • হাদিস • আকীদা", p: "ফিকহ, হাদিস ও আকীদাসহ মৌলিক দ্বীনি বিষয়সমূহ পাঠদানের আধুনিক, কার্যকর ও পরীক্ষিত শিক্ষাপদ্ধতি।" },
+                  { n: "০৪", slug: "language-literature", icon: Languages, t: "ভাষা ও সাহিত্য", s: "আরবি • উর্দু • বাংলা", p: "ত্রিভাষিক দক্ষতা — পাঠ, অনুবাদ ও রচনায় ধারাবাহিক চর্চার মাধ্যমে শিক্ষকদের পেশাগত মান উন্নয়ন।" },
                 ].map(({ n, slug, icon: Icon, t, s, p }) => (
                   <Link
                     key={t}
                     to="/trainings/$slug"
                     params={{ slug }}
-                    className="group relative flex aspect-square flex-col overflow-hidden rounded-xl border border-gold/30 bg-primary-dark/75 p-5 backdrop-blur-md shadow-[0_12px_40px_-12px_rgba(0,0,0,0.65)] transition hover:-translate-y-0.5 hover:border-gold/60 hover:bg-primary-dark/85"
+                    className="group relative flex flex-col overflow-hidden rounded-xl border border-gold/30 bg-primary-dark/75 p-4 backdrop-blur-md shadow-[0_12px_40px_-12px_rgba(0,0,0,0.65)] transition hover:-translate-y-0.5 hover:border-gold/60 hover:bg-primary-dark/85 sm:p-5"
                   >
                     <span aria-hidden className="pointer-events-none absolute -right-10 -top-10 h-28 w-28 rounded-full bg-gold/10 blur-2xl transition group-hover:bg-gold/20" />
                     <span className="absolute right-4 top-4 rounded-full border border-gold/30 px-2 py-0.5 text-[10px] font-semibold tracking-[0.18em] text-gold/80">{n}</span>
@@ -543,7 +544,7 @@ function Home() {
           </div>
 
           {/* Featured (dark, large) + Latest (light, smaller) */}
-          <div className="grid gap-6 lg:grid-cols-5">
+          <div className="grid gap-6 lg:grid-cols-5 lg:items-start">
             <article className="group relative overflow-hidden rounded-3xl bg-dark-luxe text-primary-foreground p-8 shadow-[0_30px_70px_-25px_rgba(0,0,0,0.55)] sm:p-10 lg:col-span-3">
               <div aria-hidden className="pointer-events-none absolute inset-0 bg-star-pattern opacity-[0.03]" />
               <div aria-hidden className="pointer-events-none absolute -top-40 left-1/2 -translate-x-1/2 h-[460px] w-[900px] rounded-full bg-gold/15 blur-[140px]" />
@@ -591,7 +592,8 @@ function Home() {
 
                 <div className="mt-8 flex flex-wrap items-center gap-3">
                   <Link
-                    to="/events"
+                    to="/events/$id"
+                    params={{ id: events[0]?.slug || events[0]?.id || "unknown" }}
                     className="group/btn inline-flex items-center gap-2 rounded-md bg-gold px-6 py-3 text-sm font-semibold text-gold-foreground shadow-elegant transition hover:brightness-110"
                   >
                     বিস্তারিত দেখুন
@@ -608,7 +610,8 @@ function Home() {
             </article>
 
             <Link
-              to="/events"
+              to="/events/$id"
+              params={{ id: events[1]?.slug || events[1]?.id || "unknown" }}
               className="group relative flex flex-col overflow-hidden rounded-3xl border border-border bg-card p-7 shadow-[0_18px_50px_-25px_rgba(0,0,0,0.25)] transition hover:-translate-y-1 hover:border-gold/50 hover:shadow-[0_28px_60px_-25px_rgba(0,0,0,0.35)] lg:col-span-2"
             >
               <div aria-hidden className="pointer-events-none absolute -top-16 -right-16 h-44 w-44 rounded-full bg-gold/10 blur-3xl transition group-hover:bg-gold/20" />
@@ -669,7 +672,8 @@ function Home() {
                 return (
                   <Link
                     key={i}
-                    to="/events"
+                    to="/events/$id"
+                    params={{ id: (e as any).slug || (e as any).id || "unknown" }}
                     className="group flex items-center gap-4 rounded-2xl border border-border bg-card p-4 transition hover:-translate-y-0.5 hover:border-gold/50 hover:shadow-[0_15px_40px_-20px_rgba(0,0,0,0.25)]"
                   >
                     <div className="grid shrink-0 place-items-center rounded-xl border border-gold/25 bg-gold/[0.08] px-3 py-2 text-center transition group-hover:border-gold/50 group-hover:bg-gold/15">
@@ -896,7 +900,7 @@ function Home() {
 
       {/* Quick actions */}
       <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
-        <div className="grid gap-5 md:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
           {[
             { to: "/admission", icon: BookOpen, title: "অনলাইন ভর্তি", desc: "সহজ ৩-ধাপের ফরমে আবেদন করুন এবং SMS-এ নিশ্চিতকরণ পান।" },
             { to: "/results", icon: GraduationCap, title: "রেজাল্ট অনুসন্ধান", desc: "রোল নম্বর দিয়ে রেজাল্ট ও ডিজিটাল সার্টিফিকেট পান।" },

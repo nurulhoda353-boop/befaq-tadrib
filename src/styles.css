@@ -1,6 +1,7 @@
 @import "tailwindcss" source(none);
 @source "../src";
 @import "tw-animate-css";
+@plugin "@tailwindcss/typography";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -199,6 +200,47 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+
+  /* Custom elegant scrollbar */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: var(--border);
+    border-radius: 10px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: var(--gold);
+  }
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-15px); }
+  }
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+  
+  @keyframes fade-in-up {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .animate-fade-in-up {
+    animation: fade-in-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  
+  .delay-100 { animation-delay: 100ms; opacity: 0; }
+  .delay-200 { animation-delay: 200ms; opacity: 0; }
+  .delay-300 { animation-delay: 300ms; opacity: 0; }
+  .delay-400 { animation-delay: 400ms; opacity: 0; }
 }
 
 /* --- Global responsive safety nets --- */
@@ -206,6 +248,37 @@ html,
 body {
   overflow-x: hidden;
   max-width: 100%;
+}
+
+/* Ensure images never overflow their containers */
+img {
+  max-width: 100%;
+}
+
+/* Ensure iframes (maps) are fully responsive */
+iframe {
+  max-width: 100%;
+}
+
+/* Better touch targets for mobile buttons and links */
+@media (max-width: 640px) {
+  /* Ensure the marquee/ticker area doesn't cause horizontal scroll */
+  .animate-marquee {
+    will-change: transform;
+  }
+
+  /* Reduce hero section vertical spacing on very small screens */
+  .hero-pt-adjust {
+    padding-top: 5rem;
+  }
+}
+
+/* --- Tablet specific fixes (640px–1024px) --- */
+@media (min-width: 640px) and (max-width: 1024px) {
+  /* About section corner bracket overflow guard */
+  .about-kitab-brackets {
+    display: none;
+  }
 }
 
 /* Bangla matras get visually clipped when `bg-clip-text` spans wrap
