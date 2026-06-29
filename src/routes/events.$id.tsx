@@ -119,7 +119,7 @@ function EventDetailsPage() {
 
   const d = event.date ? new Date(event.date) : null;
   const isValidDate = d && !isNaN(d.getTime());
-  const dateStr = isValidDate ? d.toLocaleDateString("bn-BD", { day: "2-digit", month: "short", year: "numeric" }) : "শীঘ্রই";
+  const dateStr = isValidDate ? d.toLocaleDateString("bn-BD", { day: "2-digit", month: "long", year: "numeric" }) : "শীঘ্রই";
   const isPast = isValidDate ? d.getTime() < Date.now() : false;
 
   return (
