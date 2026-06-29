@@ -31,6 +31,7 @@ import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAdminTrainingsRouteImport } from './routes/_authenticated/admin.trainings'
 import { Route as AuthenticatedAdminTrainingBatchesRouteImport } from './routes/_authenticated/admin.training-batches'
 import { Route as AuthenticatedAdminTrainingAdmissionsRouteImport } from './routes/_authenticated/admin.training-admissions'
+import { Route as AuthenticatedAdminSmsRouteImport } from './routes/_authenticated/admin.sms'
 import { Route as AuthenticatedAdminShortLinksRouteImport } from './routes/_authenticated/admin.short-links'
 import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin.settings'
 import { Route as AuthenticatedAdminResultsRouteImport } from './routes/_authenticated/admin.results'
@@ -151,6 +152,11 @@ const AuthenticatedAdminTrainingAdmissionsRoute =
     path: '/admin/training-admissions',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAdminSmsRoute = AuthenticatedAdminSmsRouteImport.update({
+  id: '/admin/sms',
+  path: '/admin/sms',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedAdminShortLinksRoute =
   AuthenticatedAdminShortLinksRouteImport.update({
     id: '/admin/short-links',
@@ -218,6 +224,7 @@ export interface FileRoutesByFullPath {
   '/admin/results': typeof AuthenticatedAdminResultsRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/admin/short-links': typeof AuthenticatedAdminShortLinksRoute
+  '/admin/sms': typeof AuthenticatedAdminSmsRoute
   '/admin/training-admissions': typeof AuthenticatedAdminTrainingAdmissionsRoute
   '/admin/training-batches': typeof AuthenticatedAdminTrainingBatchesRoute
   '/admin/trainings': typeof AuthenticatedAdminTrainingsRoute
@@ -246,6 +253,7 @@ export interface FileRoutesByTo {
   '/admin/results': typeof AuthenticatedAdminResultsRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/admin/short-links': typeof AuthenticatedAdminShortLinksRoute
+  '/admin/sms': typeof AuthenticatedAdminSmsRoute
   '/admin/training-admissions': typeof AuthenticatedAdminTrainingAdmissionsRoute
   '/admin/training-batches': typeof AuthenticatedAdminTrainingBatchesRoute
   '/admin/trainings': typeof AuthenticatedAdminTrainingsRoute
@@ -278,6 +286,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/results': typeof AuthenticatedAdminResultsRoute
   '/_authenticated/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/_authenticated/admin/short-links': typeof AuthenticatedAdminShortLinksRoute
+  '/_authenticated/admin/sms': typeof AuthenticatedAdminSmsRoute
   '/_authenticated/admin/training-admissions': typeof AuthenticatedAdminTrainingAdmissionsRoute
   '/_authenticated/admin/training-batches': typeof AuthenticatedAdminTrainingBatchesRoute
   '/_authenticated/admin/trainings': typeof AuthenticatedAdminTrainingsRoute
@@ -310,6 +319,7 @@ export interface FileRouteTypes {
     | '/admin/results'
     | '/admin/settings'
     | '/admin/short-links'
+    | '/admin/sms'
     | '/admin/training-admissions'
     | '/admin/training-batches'
     | '/admin/trainings'
@@ -338,6 +348,7 @@ export interface FileRouteTypes {
     | '/admin/results'
     | '/admin/settings'
     | '/admin/short-links'
+    | '/admin/sms'
     | '/admin/training-admissions'
     | '/admin/training-batches'
     | '/admin/trainings'
@@ -369,6 +380,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/results'
     | '/_authenticated/admin/settings'
     | '/_authenticated/admin/short-links'
+    | '/_authenticated/admin/sms'
     | '/_authenticated/admin/training-admissions'
     | '/_authenticated/admin/training-batches'
     | '/_authenticated/admin/trainings'
@@ -547,6 +559,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminTrainingAdmissionsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/sms': {
+      id: '/_authenticated/admin/sms'
+      path: '/admin/sms'
+      fullPath: '/admin/sms'
+      preLoaderRoute: typeof AuthenticatedAdminSmsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin/short-links': {
       id: '/_authenticated/admin/short-links'
       path: '/admin/short-links'
@@ -607,6 +626,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminResultsRoute: typeof AuthenticatedAdminResultsRoute
   AuthenticatedAdminSettingsRoute: typeof AuthenticatedAdminSettingsRoute
   AuthenticatedAdminShortLinksRoute: typeof AuthenticatedAdminShortLinksRoute
+  AuthenticatedAdminSmsRoute: typeof AuthenticatedAdminSmsRoute
   AuthenticatedAdminTrainingAdmissionsRoute: typeof AuthenticatedAdminTrainingAdmissionsRoute
   AuthenticatedAdminTrainingBatchesRoute: typeof AuthenticatedAdminTrainingBatchesRoute
   AuthenticatedAdminTrainingsRoute: typeof AuthenticatedAdminTrainingsRoute
@@ -622,6 +642,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminResultsRoute: AuthenticatedAdminResultsRoute,
   AuthenticatedAdminSettingsRoute: AuthenticatedAdminSettingsRoute,
   AuthenticatedAdminShortLinksRoute: AuthenticatedAdminShortLinksRoute,
+  AuthenticatedAdminSmsRoute: AuthenticatedAdminSmsRoute,
   AuthenticatedAdminTrainingAdmissionsRoute:
     AuthenticatedAdminTrainingAdmissionsRoute,
   AuthenticatedAdminTrainingBatchesRoute:

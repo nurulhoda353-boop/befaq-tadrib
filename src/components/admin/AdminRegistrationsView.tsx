@@ -180,7 +180,7 @@ export function AdminRegistrationsView({ tabs }: { tabs: React.ReactNode }) {
       if (error) throw error;
 
       // Call notification placeholder
-      await sendConfirmationDetails(regIdStr, nextSerial, {});
+      await sendConfirmationDetails(regId);
 
       return { regIdStr, nextSerial };
     },
@@ -215,6 +215,10 @@ export function AdminRegistrationsView({ tabs }: { tabs: React.ReactNode }) {
           confirmed_at: new Date().toISOString(),
         }).eq("id", reg.id);
         if (error) throw error;
+        
+        // Send SMS
+        await sendConfirmationDetails(reg.id);
+        
         nextSerial++;
       }
     },

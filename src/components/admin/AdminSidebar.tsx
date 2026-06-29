@@ -14,6 +14,7 @@ import {
   Sparkles,
   ClipboardList,
   Link2,
+  Smartphone,
 } from "lucide-react";
 
 import {
@@ -50,6 +51,7 @@ const system = [
   { title: "অ্যাডমিন ইউজার", url: "/admin/users", icon: Users },
   { title: "সেটিংস", url: "/admin/settings", icon: Settings },
   { title: "শর্ট লিংকস", url: "/admin/short-links", icon: Link2 },
+  { title: "SMS সেটিংস", url: "/admin/sms", icon: Smartphone },
 ];
 
 export function AdminSidebar() {
