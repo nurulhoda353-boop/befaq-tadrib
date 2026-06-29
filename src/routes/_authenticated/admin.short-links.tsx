@@ -2,18 +2,20 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
-import { Link2, Copy, Plus, Loader2, Link as LinkIcon, Trash2, HelpCircle, Link2Off } from "lucide-react";
+import { Link2, Copy, Plus, Loader2, Link as LinkIcon, Trash2, HelpCircle, Link2Off, CalendarClock, Activity, Power, BarChart3, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { format } from "date-fns";
 
 export const Route = createFileRoute("/_authenticated/admin/short-links")({
   component: AdminShortLinksPage,
@@ -22,6 +24,7 @@ export const Route = createFileRoute("/_authenticated/admin/short-links")({
 function AdminShortLinksPage() {
   const [originalUrl, setOriginalUrl] = useState("");
   const [shortCode, setShortCode] = useState("");
+  const [expiresAt, setExpiresAt] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [origin, setOrigin] = useState("");
 
@@ -56,7 +59,7 @@ function AdminShortLinksPage() {
       }
     } catch (e) {
       // Invalid URL typed so far, just generate random
-      setShortCode(Math.random().toString(36).substring(2, 8));
+      setShortCode(Math.random().toString(36).substring(2, 6));
     }
   }, [originalUrl]);
 
@@ -78,6 +81,7 @@ function AdminShortLinksPage() {
       const { error } = await supabase.from("short_links").insert({
         original_url: originalUrl,
         short_code: shortCode,
+        expires_at: expiresAt ? new Date(expiresAt).toISOString() : null,
       });
 
       if (error) {
@@ -90,11 +94,27 @@ function AdminShortLinksPage() {
       toast.success("শর্ট লিংক সফলভাবে তৈরি হয়েছে!");
       setOriginalUrl("");
       setShortCode("");
+      setExpiresAt("");
       refetch();
     } catch (err: any) {
       toast.error(err.message || "লিংক তৈরি করতে সমস্যা হয়েছে");
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  const handleToggleStatus = async (id: string, currentStatus: boolean) => {
+    try {
+      const { error } = await supabase
+        .from("short_links")
+        .update({ is_active: !currentStatus })
+        .eq("id", id);
+      
+      if (error) throw error;
+      toast.success(currentStatus ? "লিংকটি অফ করা হয়েছে" : "লিংকটি আবার অন করা হয়েছে");
+      refetch();
+    } catch (err: any) {
+      toast.error(err.message || "স্ট্যাটাস পরিবর্তন করতে সমস্যা হয়েছে");
     }
   };
 
@@ -126,12 +146,13 @@ function AdminShortLinksPage() {
       <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
         
         {/* Form Card */}
-        <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
-          <form onSubmit={handleCreate} className="space-y-6">
-            <div className="grid gap-6 md:grid-cols-2">
+        <div className="bg-card border border-border rounded-xl p-6 shadow-sm relative overflow-hidden">
+          <div className="absolute top-0 right-0 p-12 bg-gold/5 blur-3xl rounded-full pointer-events-none" />
+          <form onSubmit={handleCreate} className="space-y-6 relative z-10">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               
               {/* Long URL Input */}
-              <div className="space-y-2">
+              <div className="space-y-2 lg:col-span-2">
                 <Label className="text-foreground font-semibold">মূল লিংক (Long URL)</Label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -151,7 +172,7 @@ function AdminShortLinksPage() {
               {/* Short Code Input */}
               <div className="space-y-2">
                 <div className="flex items-center gap-1">
-                  <Label className="text-foreground font-semibold">শর্ট-কোড (Custom Short Code)</Label>
+                  <Label className="text-foreground font-semibold">শর্ট-কোড</Label>
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -164,7 +185,7 @@ function AdminShortLinksPage() {
                   </TooltipProvider>
                 </div>
                 <div className="flex items-center">
-                  <span className="flex items-center justify-center bg-muted text-muted-foreground border border-r-0 border-border rounded-l-md px-4 py-2 h-10 text-sm">
+                  <span className="flex items-center justify-center bg-muted text-muted-foreground border border-r-0 border-border rounded-l-md px-4 py-2 h-10 text-sm font-medium">
                     /
                   </span>
                   <Input
@@ -172,8 +193,36 @@ function AdminShortLinksPage() {
                     required
                     value={shortCode}
                     onChange={(e) => setShortCode(e.target.value.replace(/[^a-zA-Z0-9-]/g, ''))}
-                    placeholder="custom-code"
+                    placeholder="code"
                     className="bg-background border-border text-foreground focus:ring-gold focus:border-gold rounded-l-none h-10"
+                  />
+                </div>
+              </div>
+              
+              {/* Expiration Date Input */}
+              <div className="space-y-2 lg:col-span-1">
+                <div className="flex items-center gap-1">
+                  <Label className="text-foreground font-semibold">মেয়াদ (ঐচ্ছিক)</Label>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <HelpCircle className="w-4 h-4 text-muted-foreground cursor-help" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>এই নির্দিষ্ট তারিখ ও সময়ের পর লিংকটি অটোমেটিক অফ হয়ে যাবে।</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <CalendarClock className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                  <Input
+                    type="datetime-local"
+                    value={expiresAt}
+                    onChange={(e) => setExpiresAt(e.target.value)}
+                    className="pl-10 bg-background border-border text-foreground focus:ring-gold focus:border-gold h-10"
                   />
                 </div>
               </div>
@@ -190,13 +239,17 @@ function AdminShortLinksPage() {
           </form>
         </div>
 
-        {/* List Card */}
+        {/* List Card / Progress Dashboard */}
         <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
-          <div className="p-5 border-b border-border">
+          <div className="p-5 border-b border-border flex items-center justify-between bg-muted/20">
             <h3 className="font-bold text-foreground flex items-center gap-2 text-lg">
-              <LinkIcon className="w-5 h-5 text-gold" />
-              আপনার শর্ট লিংকসমূহ
+              <Activity className="w-5 h-5 text-gold" />
+              লাইভ লিংক প্রগ্রেস
             </h3>
+            <div className="px-3 py-1 bg-gold/10 text-gold rounded-full text-xs font-semibold border border-gold/20 flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-gold animate-pulse" />
+              Live System
+            </div>
           </div>
           
           <div className="divide-y divide-border">
@@ -219,41 +272,93 @@ function AdminShortLinksPage() {
                 </Button>
               </div>
             ) : (
-              shortLinks?.map((link) => (
-                <div key={link.id} className="p-5 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between hover:bg-muted/30 transition">
-                  <div className="space-y-1 min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-gold text-lg">/{link.short_code}</span>
-                      <span className="px-2 py-0.5 rounded-full bg-muted border border-border text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">
-                        {link.clicks} Clicks
-                      </span>
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 p-5">
+                {shortLinks?.map((link) => {
+                  const isExpired = link.expires_at ? new Date(link.expires_at) < new Date() : false;
+                  const isActive = link.is_active && !isExpired;
+                  
+                  return (
+                    <div key={link.id} className="group flex flex-col border border-border bg-background rounded-xl p-5 hover:border-gold/30 hover:shadow-[0_4px_20px_rgba(212,175,55,0.05)] transition-all duration-300 relative overflow-hidden">
+                      
+                      {/* Top Header */}
+                      <div className="flex items-center justify-between mb-4 pb-4 border-b border-border/50">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-foreground text-lg tracking-tight group-hover:text-gold transition-colors">
+                            /{link.short_code}
+                          </span>
+                        </div>
+                        
+                        {/* Status Toggle / Badge */}
+                        <div className="flex items-center gap-3">
+                          {isExpired ? (
+                            <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-destructive/10 text-destructive border border-destructive/20">
+                              Expired
+                            </span>
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              <span className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full border ${isActive ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' : 'bg-muted text-muted-foreground border-border'}`}>
+                                {isActive ? 'Active' : 'Off'}
+                              </span>
+                              <Switch 
+                                checked={link.is_active}
+                                onCheckedChange={() => handleToggleStatus(link.id, link.is_active)}
+                                className="data-[state=checked]:bg-gold"
+                              />
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* URL Display */}
+                      <div className="mb-6 flex-1">
+                        <p className="text-xs font-semibold text-muted-foreground mb-1 uppercase tracking-wider">Destination</p>
+                        <p className="text-sm text-foreground line-clamp-2 leading-relaxed" title={link.original_url}>
+                          {link.original_url}
+                        </p>
+                      </div>
+
+                      {/* Stats & Info */}
+                      <div className="grid grid-cols-2 gap-3 mb-5">
+                        <div className="bg-muted/30 rounded-lg p-3 flex flex-col items-start border border-border/50">
+                          <BarChart3 className="w-4 h-4 text-gold mb-2 opacity-70" />
+                          <span className="text-2xl font-bold text-foreground leading-none mb-1">{link.clicks || 0}</span>
+                          <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">Total Clicks</span>
+                        </div>
+                        <div className="bg-muted/30 rounded-lg p-3 flex flex-col items-start border border-border/50">
+                          <Clock className={`w-4 h-4 mb-2 opacity-70 ${isExpired ? 'text-destructive' : 'text-blue-500'}`} />
+                          <span className="text-xs font-bold text-foreground leading-tight mb-1 line-clamp-2">
+                            {link.expires_at ? format(new Date(link.expires_at), "dd MMM yyyy, hh:mm a") : "Unlimited"}
+                          </span>
+                          <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">Expiration</span>
+                        </div>
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex items-center gap-2 mt-auto">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          className="flex-1 border-border bg-background hover:bg-muted text-foreground"
+                          onClick={() => copyToClipboard(link.short_code)}
+                        >
+                          <Copy className="w-4 h-4 mr-2" />
+                          কপি করুন
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10 px-3"
+                          onClick={() => handleDelete(link.id)}
+                          title="ডিলিট করুন"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                      
                     </div>
-                    <p className="text-sm text-muted-foreground truncate max-w-2xl" title={link.original_url}>
-                      {link.original_url}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2 w-full sm:w-auto">
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      className="flex-1 sm:flex-none border-border bg-background hover:bg-muted text-foreground"
-                      onClick={() => copyToClipboard(link.short_code)}
-                    >
-                      <Copy className="w-4 h-4 sm:mr-2" />
-                      <span className="hidden sm:inline">কপি লিংক</span>
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      className="text-destructive hover:text-destructive hover:bg-destructive/10 px-3"
-                      onClick={() => handleDelete(link.id)}
-                      title="ডিলিট করুন"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-              ))
+                  );
+                })}
+              </div>
             )}
           </div>
         </div>
