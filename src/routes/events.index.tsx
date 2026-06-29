@@ -31,8 +31,12 @@ function EventsPage() {
         .eq("status", "upcoming")
         .order("date", { ascending: true });
       if (error) throw error;
-      
-      return data.map((e: any) => ({
+      const validEvents = data.filter((e: any) => {
+        if (!e.date) return true;
+        return new Date(e.date).getTime() >= Date.now();
+      });
+
+      return validEvents.map((e: any) => ({
         id: e.id,
         slug: e.slug || e.id,
         title: e.title,

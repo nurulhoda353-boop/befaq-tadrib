@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -128,6 +128,23 @@ export function EventListView({ tabs }: { tabs: React.ReactNode }) {
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
+  // Background sync for auto-completing past events
+  useEffect(() => {
+    if (events.length === 0) return;
+    const pastUpcoming = events.filter(e => e.status === "upcoming" && e.date && new Date(e.date).getTime() < Date.now());
+    
+    if (pastUpcoming.length > 0) {
+      const syncIds = pastUpcoming.map(e => e.id);
+      supabase.from("events").update({ status: "completed" }).in("id", syncIds).then(({ error }) => {
+        if (!error) {
+          queryClient.invalidateQueries({ queryKey: ["admin-events"] });
+          queryClient.invalidateQueries({ queryKey: ["public-events"] });
+          toast.success(`${pastUpcoming.length}টি ইভেন্ট স্বয়ংক্রিয়ভাবে 'সম্পন্ন' হিসেবে আপডেট হয়েছে।`);
+        }
+      });
+    }
+  }, [events, queryClient]);
 
   return (
     <AdminShell
@@ -479,12 +496,24 @@ function EventFormDialog({
                     id="date"
                     type="datetime-local"
                     value={date}
-                    onChange={(e) => setDate(e.target.value)}
+                    onChange={(e) => {
+                      const newDate = e.target.value;
+                      setDate(newDate);
+                      if (newDate) {
+                        const time = new Date(newDate).getTime();
+                        // Auto-update status based on selected date
+                        if (time > Date.now()) {
+                          setStatus("upcoming");
+                        } else {
+                          setStatus("completed");
+                        }
+                      }
+                    }}
                     className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none focus:border-gold focus:ring-1 focus:ring-gold"
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label>স্ট্যাটাস</Label>
+                  <Label>স্ট্যাটাস (অটো-ফিল্ড)</Label>
                   <Select value={status} onValueChange={(v) => setStatus(v as Status)}>
                     <SelectTrigger className="bg-background focus:ring-gold">
                       <SelectValue />

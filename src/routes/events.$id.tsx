@@ -149,7 +149,7 @@ function EventDetailsPage() {
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-gold px-3 py-1 text-xs font-bold text-gold-foreground">
                   <Calendar size={13} /> ইভেন্ট
                 </span>
-                {event.status === "completed" ? (
+                {event.status === "completed" || (event.status === "upcoming" && isPast) ? (
                   <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-bold text-emerald-400 ring-1 ring-emerald-500/30">
                     <CheckCircle2 size={13} /> সম্পন্ন
                   </span>
@@ -182,7 +182,7 @@ function EventDetailsPage() {
                 >
                   বিস্তারিত পড়ুন
                 </button>
-                {event.has_registration && event.status === "upcoming" && (
+                {event.has_registration && event.status === "upcoming" && !isPast && (
                   <button 
                     onClick={() => document.getElementById("registration")?.scrollIntoView({ behavior: "smooth" })}
                     className="inline-flex items-center gap-2 rounded-xl bg-gold px-6 py-3.5 text-sm font-bold text-gold-foreground shadow-[0_0_20px_rgba(212,175,55,0.3)] transition-all hover:bg-gold/90 hover:-translate-y-0.5 hover:shadow-[0_0_30px_rgba(212,175,55,0.5)]"
@@ -292,13 +292,15 @@ function EventDetailsPage() {
         {/* 3. Registration Section (Centered at the bottom) */}
         <div id="registration" className="max-w-3xl mx-auto pt-16">
           {event.has_registration ? (
-            event.status === "upcoming" ? (
+            event.status === "upcoming" && !isPast ? (
               <RegistrationPanel event={event} />
             ) : (
               <div className="rounded-3xl border border-border bg-card p-12 text-center shadow-[0_10px_40px_-15px_rgba(0,0,0,0.05)]">
                 <CheckCircle2 size={48} className="mx-auto text-muted-foreground mb-4 opacity-30" />
                 <h3 className="text-2xl font-bold text-foreground">রেজিস্ট্রেশন বন্ধ</h3>
-                <p className="mt-2 text-muted-foreground font-medium">এই ইভেন্টের রেজিস্ট্রেশন আর চালু নেই।</p>
+                <p className="mt-2 text-muted-foreground font-medium">
+                  {isPast ? "এই ইভেন্টের সময়সীমা শেষ হয়ে গেছে, তাই রেজিস্ট্রেশন বন্ধ আছে।" : "এই ইভেন্টের রেজিস্ট্রেশন আর চালু নেই।"}
+                </p>
               </div>
             )
           ) : (

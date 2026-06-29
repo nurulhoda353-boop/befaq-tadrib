@@ -28,6 +28,8 @@ import { Route as EventsIdRouteImport } from './routes/events.$id'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
 import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin.users'
 import { Route as AuthenticatedAdminTrainingsRouteImport } from './routes/_authenticated/admin.trainings'
+import { Route as AuthenticatedAdminTrainingBatchesRouteImport } from './routes/_authenticated/admin.training-batches'
+import { Route as AuthenticatedAdminTrainingAdmissionsRouteImport } from './routes/_authenticated/admin.training-admissions'
 import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin.settings'
 import { Route as AuthenticatedAdminResultsRouteImport } from './routes/_authenticated/admin.results'
 import { Route as AuthenticatedAdminNoticesRouteImport } from './routes/_authenticated/admin.notices'
@@ -130,6 +132,18 @@ const AuthenticatedAdminTrainingsRoute =
     path: '/admin/trainings',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAdminTrainingBatchesRoute =
+  AuthenticatedAdminTrainingBatchesRouteImport.update({
+    id: '/admin/training-batches',
+    path: '/admin/training-batches',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminTrainingAdmissionsRoute =
+  AuthenticatedAdminTrainingAdmissionsRouteImport.update({
+    id: '/admin/training-admissions',
+    path: '/admin/training-admissions',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAdminSettingsRoute =
   AuthenticatedAdminSettingsRouteImport.update({
     id: '/admin/settings',
@@ -189,6 +203,8 @@ export interface FileRoutesByFullPath {
   '/admin/notices': typeof AuthenticatedAdminNoticesRoute
   '/admin/results': typeof AuthenticatedAdminResultsRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
+  '/admin/training-admissions': typeof AuthenticatedAdminTrainingAdmissionsRoute
+  '/admin/training-batches': typeof AuthenticatedAdminTrainingBatchesRoute
   '/admin/trainings': typeof AuthenticatedAdminTrainingsRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
@@ -213,6 +229,8 @@ export interface FileRoutesByTo {
   '/admin/notices': typeof AuthenticatedAdminNoticesRoute
   '/admin/results': typeof AuthenticatedAdminResultsRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
+  '/admin/training-admissions': typeof AuthenticatedAdminTrainingAdmissionsRoute
+  '/admin/training-batches': typeof AuthenticatedAdminTrainingBatchesRoute
   '/admin/trainings': typeof AuthenticatedAdminTrainingsRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
@@ -241,6 +259,8 @@ export interface FileRoutesById {
   '/_authenticated/admin/notices': typeof AuthenticatedAdminNoticesRoute
   '/_authenticated/admin/results': typeof AuthenticatedAdminResultsRoute
   '/_authenticated/admin/settings': typeof AuthenticatedAdminSettingsRoute
+  '/_authenticated/admin/training-admissions': typeof AuthenticatedAdminTrainingAdmissionsRoute
+  '/_authenticated/admin/training-batches': typeof AuthenticatedAdminTrainingBatchesRoute
   '/_authenticated/admin/trainings': typeof AuthenticatedAdminTrainingsRoute
   '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
@@ -269,6 +289,8 @@ export interface FileRouteTypes {
     | '/admin/notices'
     | '/admin/results'
     | '/admin/settings'
+    | '/admin/training-admissions'
+    | '/admin/training-batches'
     | '/admin/trainings'
     | '/admin/users'
     | '/admin/'
@@ -293,6 +315,8 @@ export interface FileRouteTypes {
     | '/admin/notices'
     | '/admin/results'
     | '/admin/settings'
+    | '/admin/training-admissions'
+    | '/admin/training-batches'
     | '/admin/trainings'
     | '/admin/users'
     | '/admin'
@@ -320,6 +344,8 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/notices'
     | '/_authenticated/admin/results'
     | '/_authenticated/admin/settings'
+    | '/_authenticated/admin/training-admissions'
+    | '/_authenticated/admin/training-batches'
     | '/_authenticated/admin/trainings'
     | '/_authenticated/admin/users'
     | '/_authenticated/admin/'
@@ -474,6 +500,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminTrainingsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/training-batches': {
+      id: '/_authenticated/admin/training-batches'
+      path: '/admin/training-batches'
+      fullPath: '/admin/training-batches'
+      preLoaderRoute: typeof AuthenticatedAdminTrainingBatchesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/training-admissions': {
+      id: '/_authenticated/admin/training-admissions'
+      path: '/admin/training-admissions'
+      fullPath: '/admin/training-admissions'
+      preLoaderRoute: typeof AuthenticatedAdminTrainingAdmissionsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin/settings': {
       id: '/_authenticated/admin/settings'
       path: '/admin/settings'
@@ -526,6 +566,8 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminNoticesRoute: typeof AuthenticatedAdminNoticesRoute
   AuthenticatedAdminResultsRoute: typeof AuthenticatedAdminResultsRoute
   AuthenticatedAdminSettingsRoute: typeof AuthenticatedAdminSettingsRoute
+  AuthenticatedAdminTrainingAdmissionsRoute: typeof AuthenticatedAdminTrainingAdmissionsRoute
+  AuthenticatedAdminTrainingBatchesRoute: typeof AuthenticatedAdminTrainingBatchesRoute
   AuthenticatedAdminTrainingsRoute: typeof AuthenticatedAdminTrainingsRoute
   AuthenticatedAdminUsersRoute: typeof AuthenticatedAdminUsersRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
@@ -538,6 +580,10 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminNoticesRoute: AuthenticatedAdminNoticesRoute,
   AuthenticatedAdminResultsRoute: AuthenticatedAdminResultsRoute,
   AuthenticatedAdminSettingsRoute: AuthenticatedAdminSettingsRoute,
+  AuthenticatedAdminTrainingAdmissionsRoute:
+    AuthenticatedAdminTrainingAdmissionsRoute,
+  AuthenticatedAdminTrainingBatchesRoute:
+    AuthenticatedAdminTrainingBatchesRoute,
   AuthenticatedAdminTrainingsRoute: AuthenticatedAdminTrainingsRoute,
   AuthenticatedAdminUsersRoute: AuthenticatedAdminUsersRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,

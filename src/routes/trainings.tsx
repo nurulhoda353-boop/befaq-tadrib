@@ -1,7 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
-import { trainings } from "@/lib/data";
+import { trainings as dummyTrainings } from "@/lib/data";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import {
   ArrowRight, BookOpen, Calendar, ChevronRight, Clock,
   MapPin, Sparkles, Target, Users, Tag, Award, GraduationCap,
@@ -46,16 +48,57 @@ function getTrainingIcon(id: string) {
 }
 
 function TrainingsPage() {
-  const central = trainings.filter(t => t.type === "central");
-  const regional = trainings.filter(t => t.type === "regional");
-  const special = trainings.filter(t => t.type === "special");
+  const { data: dbTrainings = [] } = useQuery({
+    queryKey: ["trainings"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("trainings").select("*");
+      if (error) throw error;
+      return data;
+    },
+  });
 
-  // Dummy upcoming batches (normally fetched from DB)
-  const upcomingBatches = useMemo(() => [
-    { id: "b1", trainingId: "c1", title: "কেন্দ্রীয় নূরানী শিক্ষক", start: "আগামী ২ দিন পর", date: "২২ জুন, ২০২৬", remaining: 12 },
-    { id: "b2", trainingId: "r1", title: "দরসিয়াত শিক্ষক (চট্টগ্রাম)", start: "আগামী ৫ দিন পর", date: "২৫ জুন, ২০২৬", remaining: 5 },
-    { id: "b3", trainingId: "c2", title: "কেন্দ্রীয় হুফফাজুল কোরআন", start: "আগামী ১০ দিন পর", date: "৩০ জুন, ২০২৬", remaining: 20 },
-  ], []);
+  // Use DB trainings if available, otherwise fallback to dummy structure for the UI
+  // Note: We map DB fields to the expected UI fields if they differ
+  const trainings = dbTrainings.length > 0 ? dbTrainings.map((t: any) => ({
+    id: t.id,
+    slug: t.slug,
+    name: t.title,
+    type: t.type,
+    category: t.category,
+    duration: t.duration,
+    targetGroup: t.target_group,
+    location: t.location,
+    description: t.description,
+  })) : dummyTrainings;
+
+  const central = trainings.filter((t: any) => t.type === "central");
+  const regional = trainings.filter((t: any) => t.type === "regional");
+  const special = trainings.filter((t: any) => t.type === "special");
+
+  const { data: upcomingBatches = [] } = useQuery({
+    queryKey: ["upcoming-batches"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("training_batches")
+        .select(`
+          *,
+          trainings ( id, title, slug )
+        `)
+        .eq("status", "upcoming")
+        .order("start_date", { ascending: true })
+        .limit(10);
+      if (error) throw error;
+      
+      return data.map((b: any) => ({
+        id: b.id,
+        trainingId: b.trainings?.id,
+        title: b.trainings?.title,
+        start: b.start_date ? "শীঘ্রই শুরু" : "তারিখ নির্ধারিত নয়",
+        date: b.start_date || "অপেক্ষমান",
+        remaining: b.total_seats,
+      }));
+    },
+  });
 
   return (
     <div className="min-h-screen bg-background">
