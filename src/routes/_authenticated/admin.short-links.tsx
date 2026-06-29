@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
-import { Link2, Copy, Plus, Loader2, Link as LinkIcon, Trash2, HelpCircle, Link2Off, CalendarClock, Activity, Power, BarChart3, Clock } from "lucide-react";
+import { Link2, Copy, Plus, Loader2, Link as LinkIcon, Trash2, HelpCircle, Link2Off, CalendarClock, Activity, Power, BarChart3, Clock, Pencil, Check, X } from "lucide-react";
 import { toast } from "sonner";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { Button } from "@/components/ui/button";
@@ -27,6 +27,9 @@ function AdminShortLinksPage() {
   const [expiresAt, setExpiresAt] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [origin, setOrigin] = useState("");
+
+  const [editingDateId, setEditingDateId] = useState<string | null>(null);
+  const [editDateValue, setEditDateValue] = useState<string>("");
 
   useEffect(() => {
     setOrigin(window.location.origin);
@@ -115,6 +118,22 @@ function AdminShortLinksPage() {
       refetch();
     } catch (err: any) {
       toast.error(err.message || "স্ট্যাটাস পরিবর্তন করতে সমস্যা হয়েছে");
+    }
+  };
+
+  const handleUpdateDate = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from("short_links")
+        .update({ expires_at: editDateValue ? new Date(editDateValue).toISOString() : null })
+        .eq("id", id);
+      
+      if (error) throw error;
+      toast.success("মেয়াদ আপডেট করা হয়েছে");
+      setEditingDateId(null);
+      refetch();
+    } catch (err: any) {
+      toast.error(err.message || "আপডেট করতে সমস্যা হয়েছে");
     }
   };
 
@@ -324,12 +343,48 @@ function AdminShortLinksPage() {
                           <span className="text-2xl font-bold text-foreground leading-none mb-1">{link.clicks || 0}</span>
                           <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">Total Clicks</span>
                         </div>
-                        <div className="bg-muted/30 rounded-lg p-3 flex flex-col items-start border border-border/50">
+                        <div className="bg-muted/30 rounded-lg p-3 flex flex-col items-start border border-border/50 relative group/date h-full">
                           <Clock className={`w-4 h-4 mb-2 opacity-70 ${isExpired ? 'text-destructive' : 'text-blue-500'}`} />
-                          <span className="text-xs font-bold text-foreground leading-tight mb-1 line-clamp-2">
-                            {link.expires_at ? format(new Date(link.expires_at), "dd MMM yyyy, hh:mm a") : "Unlimited"}
-                          </span>
-                          <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">Expiration</span>
+                          
+                          {editingDateId === link.id ? (
+                            <div className="flex items-center gap-1 w-full mt-auto pt-1">
+                              <Input 
+                                type="datetime-local" 
+                                size="sm" 
+                                className="h-6 text-[10px] px-1 py-0 w-full bg-background border-border" 
+                                value={editDateValue}
+                                onChange={(e) => setEditDateValue(e.target.value)}
+                              />
+                              <Button size="icon" variant="ghost" className="h-6 w-6 shrink-0 text-emerald-500 hover:text-emerald-400 hover:bg-emerald-500/10" onClick={() => handleUpdateDate(link.id)}>
+                                <Check className="w-3 h-3" />
+                              </Button>
+                              <Button size="icon" variant="ghost" className="h-6 w-6 shrink-0 text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => setEditingDateId(null)}>
+                                <X className="w-3 h-3" />
+                              </Button>
+                            </div>
+                          ) : (
+                            <div className="mt-auto w-full">
+                              <span className="text-xs font-bold text-foreground leading-tight line-clamp-2">
+                                {link.expires_at ? format(new Date(link.expires_at), "dd MMM yyyy, hh:mm a") : "Unlimited"}
+                              </span>
+                              <div className="flex items-center justify-between w-full mt-1">
+                                <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">Expiration</span>
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon" 
+                                  className="h-5 w-5 opacity-0 group-hover/date:opacity-100 transition-opacity absolute top-2 right-2"
+                                  onClick={() => {
+                                    setEditingDateId(link.id);
+                                    // format correctly for datetime-local input YYYY-MM-DDThh:mm
+                                    setEditDateValue(link.expires_at ? format(new Date(link.expires_at), "yyyy-MM-dd'T'HH:mm") : "");
+                                  }}
+                                  title="মেয়াদ পরিবর্তন করুন"
+                                >
+                                  <Pencil className="w-3 h-3 text-muted-foreground" />
+                                </Button>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </div>
 
