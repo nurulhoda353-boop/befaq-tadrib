@@ -13,6 +13,7 @@ import {
   Home,
   Sparkles,
   ClipboardList,
+  Link2,
 } from "lucide-react";
 
 import {
@@ -46,8 +47,9 @@ const engage = [
 ];
 
 const system = [
-  { title: "ইউজার ও রোল", url: "/admin/users", icon: Users },
+  { title: "অ্যাডমিন ইউজার", url: "/admin/users", icon: Users },
   { title: "সেটিংস", url: "/admin/settings", icon: Settings },
+  { title: "শর্ট লিংকস", url: "/admin/short-links", icon: Link2 },
 ];
 
 export function AdminSidebar() {
@@ -65,7 +67,7 @@ export function AdminSidebar() {
     if (role === 'admin') return items;
     return items.filter(item => {
       if (item.url === '/admin') return true; // Always allow dashboard home
-      if (item.url === '/admin/settings' || item.url === '/admin/users') return false; // Hard block system routes for editors
+      if (item.url === '/admin/settings' || item.url === '/admin/users' || item.url === '/admin/short-links') return false; // Hard block system routes for editors
       
       // url example: /admin/notices -> permission key: notices
       const key = item.url.split('/').pop();

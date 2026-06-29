@@ -23,6 +23,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as NoticesIndexRouteImport } from './routes/notices.index'
 import { Route as EventsIndexRouteImport } from './routes/events.index'
 import { Route as TrainingsSlugRouteImport } from './routes/trainings.$slug'
+import { Route as SCodeRouteImport } from './routes/s.$code'
 import { Route as NoticesIdRouteImport } from './routes/notices.$id'
 import { Route as EventsIdRouteImport } from './routes/events.$id'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
@@ -30,6 +31,7 @@ import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAdminTrainingsRouteImport } from './routes/_authenticated/admin.trainings'
 import { Route as AuthenticatedAdminTrainingBatchesRouteImport } from './routes/_authenticated/admin.training-batches'
 import { Route as AuthenticatedAdminTrainingAdmissionsRouteImport } from './routes/_authenticated/admin.training-admissions'
+import { Route as AuthenticatedAdminShortLinksRouteImport } from './routes/_authenticated/admin.short-links'
 import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin.settings'
 import { Route as AuthenticatedAdminResultsRouteImport } from './routes/_authenticated/admin.results'
 import { Route as AuthenticatedAdminNoticesRouteImport } from './routes/_authenticated/admin.notices'
@@ -106,6 +108,11 @@ const TrainingsSlugRoute = TrainingsSlugRouteImport.update({
   path: '/$slug',
   getParentRoute: () => TrainingsRoute,
 } as any)
+const SCodeRoute = SCodeRouteImport.update({
+  id: '/s/$code',
+  path: '/s/$code',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const NoticesIdRoute = NoticesIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -142,6 +149,12 @@ const AuthenticatedAdminTrainingAdmissionsRoute =
   AuthenticatedAdminTrainingAdmissionsRouteImport.update({
     id: '/admin/training-admissions',
     path: '/admin/training-admissions',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminShortLinksRoute =
+  AuthenticatedAdminShortLinksRouteImport.update({
+    id: '/admin/short-links',
+    path: '/admin/short-links',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedAdminSettingsRoute =
@@ -194,6 +207,7 @@ export interface FileRoutesByFullPath {
   '/trainings': typeof TrainingsRouteWithChildren
   '/events/$id': typeof EventsIdRoute
   '/notices/$id': typeof NoticesIdRoute
+  '/s/$code': typeof SCodeRoute
   '/trainings/$slug': typeof TrainingsSlugRoute
   '/events/': typeof EventsIndexRoute
   '/notices/': typeof NoticesIndexRoute
@@ -203,6 +217,7 @@ export interface FileRoutesByFullPath {
   '/admin/notices': typeof AuthenticatedAdminNoticesRoute
   '/admin/results': typeof AuthenticatedAdminResultsRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
+  '/admin/short-links': typeof AuthenticatedAdminShortLinksRoute
   '/admin/training-admissions': typeof AuthenticatedAdminTrainingAdmissionsRoute
   '/admin/training-batches': typeof AuthenticatedAdminTrainingBatchesRoute
   '/admin/trainings': typeof AuthenticatedAdminTrainingsRoute
@@ -220,6 +235,7 @@ export interface FileRoutesByTo {
   '/trainings': typeof TrainingsRouteWithChildren
   '/events/$id': typeof EventsIdRoute
   '/notices/$id': typeof NoticesIdRoute
+  '/s/$code': typeof SCodeRoute
   '/trainings/$slug': typeof TrainingsSlugRoute
   '/events': typeof EventsIndexRoute
   '/notices': typeof NoticesIndexRoute
@@ -229,6 +245,7 @@ export interface FileRoutesByTo {
   '/admin/notices': typeof AuthenticatedAdminNoticesRoute
   '/admin/results': typeof AuthenticatedAdminResultsRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
+  '/admin/short-links': typeof AuthenticatedAdminShortLinksRoute
   '/admin/training-admissions': typeof AuthenticatedAdminTrainingAdmissionsRoute
   '/admin/training-batches': typeof AuthenticatedAdminTrainingBatchesRoute
   '/admin/trainings': typeof AuthenticatedAdminTrainingsRoute
@@ -250,6 +267,7 @@ export interface FileRoutesById {
   '/trainings': typeof TrainingsRouteWithChildren
   '/events/$id': typeof EventsIdRoute
   '/notices/$id': typeof NoticesIdRoute
+  '/s/$code': typeof SCodeRoute
   '/trainings/$slug': typeof TrainingsSlugRoute
   '/events/': typeof EventsIndexRoute
   '/notices/': typeof NoticesIndexRoute
@@ -259,6 +277,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/notices': typeof AuthenticatedAdminNoticesRoute
   '/_authenticated/admin/results': typeof AuthenticatedAdminResultsRoute
   '/_authenticated/admin/settings': typeof AuthenticatedAdminSettingsRoute
+  '/_authenticated/admin/short-links': typeof AuthenticatedAdminShortLinksRoute
   '/_authenticated/admin/training-admissions': typeof AuthenticatedAdminTrainingAdmissionsRoute
   '/_authenticated/admin/training-batches': typeof AuthenticatedAdminTrainingBatchesRoute
   '/_authenticated/admin/trainings': typeof AuthenticatedAdminTrainingsRoute
@@ -280,6 +299,7 @@ export interface FileRouteTypes {
     | '/trainings'
     | '/events/$id'
     | '/notices/$id'
+    | '/s/$code'
     | '/trainings/$slug'
     | '/events/'
     | '/notices/'
@@ -289,6 +309,7 @@ export interface FileRouteTypes {
     | '/admin/notices'
     | '/admin/results'
     | '/admin/settings'
+    | '/admin/short-links'
     | '/admin/training-admissions'
     | '/admin/training-batches'
     | '/admin/trainings'
@@ -306,6 +327,7 @@ export interface FileRouteTypes {
     | '/trainings'
     | '/events/$id'
     | '/notices/$id'
+    | '/s/$code'
     | '/trainings/$slug'
     | '/events'
     | '/notices'
@@ -315,6 +337,7 @@ export interface FileRouteTypes {
     | '/admin/notices'
     | '/admin/results'
     | '/admin/settings'
+    | '/admin/short-links'
     | '/admin/training-admissions'
     | '/admin/training-batches'
     | '/admin/trainings'
@@ -335,6 +358,7 @@ export interface FileRouteTypes {
     | '/trainings'
     | '/events/$id'
     | '/notices/$id'
+    | '/s/$code'
     | '/trainings/$slug'
     | '/events/'
     | '/notices/'
@@ -344,6 +368,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/notices'
     | '/_authenticated/admin/results'
     | '/_authenticated/admin/settings'
+    | '/_authenticated/admin/short-links'
     | '/_authenticated/admin/training-admissions'
     | '/_authenticated/admin/training-batches'
     | '/_authenticated/admin/trainings'
@@ -363,6 +388,7 @@ export interface RootRouteChildren {
   NoticesRoute: typeof NoticesRouteWithChildren
   ResultsRoute: typeof ResultsRoute
   TrainingsRoute: typeof TrainingsRouteWithChildren
+  SCodeRoute: typeof SCodeRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -465,6 +491,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TrainingsSlugRouteImport
       parentRoute: typeof TrainingsRoute
     }
+    '/s/$code': {
+      id: '/s/$code'
+      path: '/s/$code'
+      fullPath: '/s/$code'
+      preLoaderRoute: typeof SCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/notices/$id': {
       id: '/notices/$id'
       path: '/$id'
@@ -512,6 +545,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/training-admissions'
       fullPath: '/admin/training-admissions'
       preLoaderRoute: typeof AuthenticatedAdminTrainingAdmissionsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/short-links': {
+      id: '/_authenticated/admin/short-links'
+      path: '/admin/short-links'
+      fullPath: '/admin/short-links'
+      preLoaderRoute: typeof AuthenticatedAdminShortLinksRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/admin/settings': {
@@ -566,6 +606,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminNoticesRoute: typeof AuthenticatedAdminNoticesRoute
   AuthenticatedAdminResultsRoute: typeof AuthenticatedAdminResultsRoute
   AuthenticatedAdminSettingsRoute: typeof AuthenticatedAdminSettingsRoute
+  AuthenticatedAdminShortLinksRoute: typeof AuthenticatedAdminShortLinksRoute
   AuthenticatedAdminTrainingAdmissionsRoute: typeof AuthenticatedAdminTrainingAdmissionsRoute
   AuthenticatedAdminTrainingBatchesRoute: typeof AuthenticatedAdminTrainingBatchesRoute
   AuthenticatedAdminTrainingsRoute: typeof AuthenticatedAdminTrainingsRoute
@@ -580,6 +621,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminNoticesRoute: AuthenticatedAdminNoticesRoute,
   AuthenticatedAdminResultsRoute: AuthenticatedAdminResultsRoute,
   AuthenticatedAdminSettingsRoute: AuthenticatedAdminSettingsRoute,
+  AuthenticatedAdminShortLinksRoute: AuthenticatedAdminShortLinksRoute,
   AuthenticatedAdminTrainingAdmissionsRoute:
     AuthenticatedAdminTrainingAdmissionsRoute,
   AuthenticatedAdminTrainingBatchesRoute:
@@ -642,6 +684,7 @@ const rootRouteChildren: RootRouteChildren = {
   NoticesRoute: NoticesRouteWithChildren,
   ResultsRoute: ResultsRoute,
   TrainingsRoute: TrainingsRouteWithChildren,
+  SCodeRoute: SCodeRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
