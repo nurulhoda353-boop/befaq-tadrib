@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+﻿import { createFileRoute } from "@tanstack/react-router";
 import { useState, useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -89,7 +89,7 @@ const statusMeta: Record<Status, { label: string; tone: string; icon: typeof Clo
 function fmtDate(d: string | null) {
   if (!d) return "—";
   return new Date(d).toLocaleString("bn-BD", {
-    day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit",
+    day: "2-digit", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit",
   });
 }
 

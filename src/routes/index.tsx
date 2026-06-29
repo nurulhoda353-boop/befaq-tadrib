@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+﻿import { createFileRoute, Link } from "@tanstack/react-router";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { trainings, notices as staticNotices, events as staticEvents, stats, siteInfo } from "@/lib/data";
@@ -45,7 +45,7 @@ function Home() {
         body: n.body || "",
         category: catMap[n.category] ?? "ঘোষণা",
         date: n.published_at
-          ? new Date(n.published_at).toLocaleDateString("bn-BD", { day: "2-digit", month: "short", year: "numeric" })
+          ? new Date(n.published_at).toLocaleDateString("bn-BD", { day: "2-digit", month: "long", year: "numeric" })
           : "",
       }));
     },
@@ -68,7 +68,7 @@ function Home() {
         venue: e.location || "",
         type: "ইভেন্ট",
         date: e.date
-          ? new Date(e.date).toLocaleDateString("bn-BD", { day: "2-digit", month: "short", year: "numeric" })
+          ? new Date(e.date).toLocaleDateString("bn-BD", { day: "2-digit", month: "long", year: "numeric" })
           : "শীঘ্রই",
       }));
     },

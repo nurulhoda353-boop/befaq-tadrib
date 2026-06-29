@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+﻿import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -44,7 +44,7 @@ function EventsPage() {
         venue: e.location || "স্থান নির্ধারিত নয়",
         type: "ইভেন্ট", // we don't have 'type' column anymore, can just use 'ইভেন্ট'
         date: e.date
-          ? new Date(e.date).toLocaleDateString("bn-BD", { day: "2-digit", month: "short", year: "numeric" })
+          ? new Date(e.date).toLocaleDateString("bn-BD", { day: "2-digit", month: "long", year: "numeric" })
           : "শীঘ্রই",
         time: e.time || (e.date ? new Date(e.date).toLocaleTimeString("bn-BD", { hour: "2-digit", minute: "2-digit" }) : null),
         hasRegistration: e.has_registration,

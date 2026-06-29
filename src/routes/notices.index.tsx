@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+﻿import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -86,7 +86,7 @@ function NoticesPage() {
         body: n.body,
         category: catMap[n.category] ?? "ঘোষণা",
         date: n.published_at
-          ? new Date(n.published_at).toLocaleDateString("bn-BD", { day: "2-digit", month: "short", year: "numeric" })
+          ? new Date(n.published_at).toLocaleDateString("bn-BD", { day: "2-digit", month: "long", year: "numeric" })
           : "",
         pinned: n.pinned,
         attachment_url: n.attachment_url,
