@@ -50,15 +50,9 @@ function AdminShortLinksPage() {
     }
     try {
       const url = new URL(originalUrl);
-      const paths = url.pathname.split("/").filter(Boolean);
-      if (paths.length > 0) {
-        const lastSegment = paths[paths.length - 1];
-        // Take first 5 alphanumeric chars of slug and add 3 random chars
-        const cleanSlug = lastSegment.replace(/[^a-zA-Z0-9]/g, "").substring(0, 5);
-        const randomStr = Math.random().toString(36).substring(2, 5);
-        setShortCode(`${cleanSlug}-${randomStr}`.toLowerCase());
-      } else {
-        setShortCode(Math.random().toString(36).substring(2, 8));
+      if (url) {
+        // Generate a 4-character short code automatically
+        setShortCode(Math.random().toString(36).substring(2, 6));
       }
     } catch (e) {
       // Invalid URL typed so far, just generate random
@@ -117,7 +111,7 @@ function AdminShortLinksPage() {
   };
 
   const copyToClipboard = (code: string) => {
-    const fullUrl = `${origin}/s/${code}`;
+    const fullUrl = `${origin}/${code}`;
     navigator.clipboard.writeText(fullUrl);
     toast.success("শর্ট লিংক কপি করা হয়েছে!");
   };
@@ -171,7 +165,7 @@ function AdminShortLinksPage() {
                 </div>
                 <div className="flex items-center">
                   <span className="flex items-center justify-center bg-muted text-muted-foreground border border-r-0 border-border rounded-l-md px-4 py-2 h-10 text-sm">
-                    /s/
+                    /
                   </span>
                   <Input
                     type="text"
@@ -229,7 +223,7 @@ function AdminShortLinksPage() {
                 <div key={link.id} className="p-5 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between hover:bg-muted/30 transition">
                   <div className="space-y-1 min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <span className="font-bold text-gold text-lg">/s/{link.short_code}</span>
+                      <span className="font-bold text-gold text-lg">/{link.short_code}</span>
                       <span className="px-2 py-0.5 rounded-full bg-muted border border-border text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">
                         {link.clicks} Clicks
                       </span>

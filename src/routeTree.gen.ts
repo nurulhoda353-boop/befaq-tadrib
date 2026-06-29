@@ -18,12 +18,12 @@ import { Route as CentersRouteImport } from './routes/centers'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AdmissionRouteImport } from './routes/admission'
 import { Route as AboutRouteImport } from './routes/about'
+import { Route as CodeRouteImport } from './routes/$code'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as NoticesIndexRouteImport } from './routes/notices.index'
 import { Route as EventsIndexRouteImport } from './routes/events.index'
 import { Route as TrainingsSlugRouteImport } from './routes/trainings.$slug'
-import { Route as SCodeRouteImport } from './routes/s.$code'
 import { Route as NoticesIdRouteImport } from './routes/notices.$id'
 import { Route as EventsIdRouteImport } from './routes/events.$id'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
@@ -84,6 +84,11 @@ const AboutRoute = AboutRouteImport.update({
   path: '/about',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CodeRoute = CodeRouteImport.update({
+  id: '/$code',
+  path: '/$code',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
@@ -107,11 +112,6 @@ const TrainingsSlugRoute = TrainingsSlugRouteImport.update({
   id: '/$slug',
   path: '/$slug',
   getParentRoute: () => TrainingsRoute,
-} as any)
-const SCodeRoute = SCodeRouteImport.update({
-  id: '/s/$code',
-  path: '/s/$code',
-  getParentRoute: () => rootRouteImport,
 } as any)
 const NoticesIdRoute = NoticesIdRouteImport.update({
   id: '/$id',
@@ -196,6 +196,7 @@ const AuthenticatedAdminCentersRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/$code': typeof CodeRoute
   '/about': typeof AboutRoute
   '/admission': typeof AdmissionRoute
   '/auth': typeof AuthRoute
@@ -207,7 +208,6 @@ export interface FileRoutesByFullPath {
   '/trainings': typeof TrainingsRouteWithChildren
   '/events/$id': typeof EventsIdRoute
   '/notices/$id': typeof NoticesIdRoute
-  '/s/$code': typeof SCodeRoute
   '/trainings/$slug': typeof TrainingsSlugRoute
   '/events/': typeof EventsIndexRoute
   '/notices/': typeof NoticesIndexRoute
@@ -226,6 +226,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/$code': typeof CodeRoute
   '/about': typeof AboutRoute
   '/admission': typeof AdmissionRoute
   '/auth': typeof AuthRoute
@@ -235,7 +236,6 @@ export interface FileRoutesByTo {
   '/trainings': typeof TrainingsRouteWithChildren
   '/events/$id': typeof EventsIdRoute
   '/notices/$id': typeof NoticesIdRoute
-  '/s/$code': typeof SCodeRoute
   '/trainings/$slug': typeof TrainingsSlugRoute
   '/events': typeof EventsIndexRoute
   '/notices': typeof NoticesIndexRoute
@@ -256,6 +256,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/$code': typeof CodeRoute
   '/about': typeof AboutRoute
   '/admission': typeof AdmissionRoute
   '/auth': typeof AuthRoute
@@ -267,7 +268,6 @@ export interface FileRoutesById {
   '/trainings': typeof TrainingsRouteWithChildren
   '/events/$id': typeof EventsIdRoute
   '/notices/$id': typeof NoticesIdRoute
-  '/s/$code': typeof SCodeRoute
   '/trainings/$slug': typeof TrainingsSlugRoute
   '/events/': typeof EventsIndexRoute
   '/notices/': typeof NoticesIndexRoute
@@ -288,6 +288,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/$code'
     | '/about'
     | '/admission'
     | '/auth'
@@ -299,7 +300,6 @@ export interface FileRouteTypes {
     | '/trainings'
     | '/events/$id'
     | '/notices/$id'
-    | '/s/$code'
     | '/trainings/$slug'
     | '/events/'
     | '/notices/'
@@ -318,6 +318,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/$code'
     | '/about'
     | '/admission'
     | '/auth'
@@ -327,7 +328,6 @@ export interface FileRouteTypes {
     | '/trainings'
     | '/events/$id'
     | '/notices/$id'
-    | '/s/$code'
     | '/trainings/$slug'
     | '/events'
     | '/notices'
@@ -347,6 +347,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_authenticated'
+    | '/$code'
     | '/about'
     | '/admission'
     | '/auth'
@@ -358,7 +359,6 @@ export interface FileRouteTypes {
     | '/trainings'
     | '/events/$id'
     | '/notices/$id'
-    | '/s/$code'
     | '/trainings/$slug'
     | '/events/'
     | '/notices/'
@@ -379,6 +379,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  CodeRoute: typeof CodeRoute
   AboutRoute: typeof AboutRoute
   AdmissionRoute: typeof AdmissionRoute
   AuthRoute: typeof AuthRoute
@@ -388,7 +389,6 @@ export interface RootRouteChildren {
   NoticesRoute: typeof NoticesRouteWithChildren
   ResultsRoute: typeof ResultsRoute
   TrainingsRoute: typeof TrainingsRouteWithChildren
-  SCodeRoute: typeof SCodeRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -456,6 +456,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AboutRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/$code': {
+      id: '/$code'
+      path: '/$code'
+      fullPath: '/$code'
+      preLoaderRoute: typeof CodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated': {
       id: '/_authenticated'
       path: ''
@@ -490,13 +497,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/trainings/$slug'
       preLoaderRoute: typeof TrainingsSlugRouteImport
       parentRoute: typeof TrainingsRoute
-    }
-    '/s/$code': {
-      id: '/s/$code'
-      path: '/s/$code'
-      fullPath: '/s/$code'
-      preLoaderRoute: typeof SCodeRouteImport
-      parentRoute: typeof rootRouteImport
     }
     '/notices/$id': {
       id: '/notices/$id'
@@ -675,6 +675,7 @@ const TrainingsRouteWithChildren = TrainingsRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  CodeRoute: CodeRoute,
   AboutRoute: AboutRoute,
   AdmissionRoute: AdmissionRoute,
   AuthRoute: AuthRoute,
@@ -684,7 +685,6 @@ const rootRouteChildren: RootRouteChildren = {
   NoticesRoute: NoticesRouteWithChildren,
   ResultsRoute: ResultsRoute,
   TrainingsRoute: TrainingsRouteWithChildren,
-  SCodeRoute: SCodeRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
