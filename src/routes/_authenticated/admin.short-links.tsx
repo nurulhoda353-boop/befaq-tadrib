@@ -2,12 +2,18 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
-import { Link2, Copy, Plus, Loader2, Link as LinkIcon, Trash2 } from "lucide-react";
+import { Link2, Copy, Plus, Loader2, Link as LinkIcon, Trash2, HelpCircle, Link2Off } from "lucide-react";
 import { toast } from "sonner";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export const Route = createFileRoute("/_authenticated/admin/short-links")({
   component: AdminShortLinksPage,
@@ -124,107 +130,139 @@ function AdminShortLinksPage() {
       subtitle="আপনার ওয়েবসাইটের বা বাইরের যেকোনো বড় লিংককে ছোট এবং শেয়ার করার উপযোগী করুন।"
     >
       <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
-        <div className="bg-white/5 border border-white/10 rounded-2xl p-6 relative overflow-hidden">
-        <div className="absolute top-0 right-0 p-12 bg-gold/5 blur-3xl rounded-full pointer-events-none" />
         
-        <form onSubmit={handleCreate} className="space-y-4 relative z-10">
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label className="text-white/90">মূল লিংক (Long URL)</Label>
-              <Input
-                type="url"
-                required
-                value={originalUrl}
-                onChange={(e) => setOriginalUrl(e.target.value)}
-                placeholder="https://example.com/very-long-url..."
-                className="bg-black/20 border-white/10 text-white focus:border-gold/50"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-white/90">শর্ট-কোড (Custom Short Code)</Label>
-              <div className="flex items-center gap-2">
-                <span className="text-white/50 text-sm bg-black/20 px-3 py-2 rounded-lg border border-white/10 hidden sm:inline-block">
-                  /s/
-                </span>
-                <Input
-                  type="text"
-                  required
-                  value={shortCode}
-                  onChange={(e) => setShortCode(e.target.value.replace(/[^a-zA-Z0-9-]/g, ''))}
-                  placeholder="custom-code"
-                  className="bg-black/20 border-white/10 text-white focus:border-gold/50"
-                />
-              </div>
-              <p className="text-xs text-white/40">শুধুমাত্র ইংরেজি অক্ষর, সংখ্যা এবং হাইফেন (-) ব্যবহার করুন</p>
-            </div>
-          </div>
-          <Button 
-            type="submit" 
-            disabled={isGenerating}
-            className="w-full sm:w-auto bg-gold hover:bg-gold-bright text-black font-bold"
-          >
-            {isGenerating ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Link2 className="w-4 h-4 mr-2" />}
-            শর্ট লিংক তৈরি করুন
-          </Button>
-        </form>
-      </div>
-
-      <div className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
-        <div className="p-4 border-b border-white/10 flex items-center justify-between">
-          <h3 className="font-bold text-white flex items-center gap-2">
-            <LinkIcon className="w-4 h-4 text-gold" />
-            আপনার শর্ট লিংকসমূহ
-          </h3>
-        </div>
-        
-        <div className="divide-y divide-white/5">
-          {isLoading ? (
-            <div className="p-8 text-center text-white/50">
-              <Loader2 className="w-6 h-6 animate-spin mx-auto" />
-            </div>
-          ) : shortLinks?.length === 0 ? (
-            <div className="p-8 text-center text-white/50 text-sm">
-              এখনো কোনো শর্ট লিংক তৈরি করা হয়নি।
-            </div>
-          ) : (
-            shortLinks?.map((link) => (
-              <div key={link.id} className="p-4 sm:p-5 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between hover:bg-white/[0.02] transition">
-                <div className="space-y-1 min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-gold text-lg">/s/{link.short_code}</span>
-                    <span className="px-2 py-0.5 rounded-full bg-white/10 text-[10px] text-white/70 uppercase tracking-wider">
-                      {link.clicks} Clicks
-                    </span>
+        {/* Form Card */}
+        <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
+          <form onSubmit={handleCreate} className="space-y-6">
+            <div className="grid gap-6 md:grid-cols-2">
+              
+              {/* Long URL Input */}
+              <div className="space-y-2">
+                <Label className="text-foreground font-semibold">মূল লিংক (Long URL)</Label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <LinkIcon className="h-4 w-4 text-muted-foreground" />
                   </div>
-                  <p className="text-sm text-white/50 truncate max-w-xl" title={link.original_url}>
-                    {link.original_url}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2 w-full sm:w-auto">
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    className="flex-1 sm:flex-none border-white/10 text-white/80 hover:bg-white/10"
-                    onClick={() => copyToClipboard(link.short_code)}
-                  >
-                    <Copy className="w-4 h-4 sm:mr-2" />
-                    <span className="hidden sm:inline">কপি লিংক</span>
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    className="text-red-400 hover:text-red-300 hover:bg-red-400/10 px-2"
-                    onClick={() => handleDelete(link.id)}
-                    title="ডিলিট করুন"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
+                  <Input
+                    type="url"
+                    required
+                    value={originalUrl}
+                    onChange={(e) => setOriginalUrl(e.target.value)}
+                    placeholder="https://example.com/very-long-url..."
+                    className="pl-10 bg-background border-border text-foreground focus:ring-gold focus:border-gold"
+                  />
                 </div>
               </div>
-            ))
-          )}
+
+              {/* Short Code Input */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-1">
+                  <Label className="text-foreground font-semibold">শর্ট-কোড (Custom Short Code)</Label>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <HelpCircle className="w-4 h-4 text-muted-foreground cursor-help" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>শুধুমাত্র ইংরেজি অক্ষর, সংখ্যা এবং হাইফেন ব্যবহার করতে পারবেন।</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+                <div className="flex items-center">
+                  <span className="flex items-center justify-center bg-muted text-muted-foreground border border-r-0 border-border rounded-l-md px-4 py-2 h-10 text-sm">
+                    /s/
+                  </span>
+                  <Input
+                    type="text"
+                    required
+                    value={shortCode}
+                    onChange={(e) => setShortCode(e.target.value.replace(/[^a-zA-Z0-9-]/g, ''))}
+                    placeholder="custom-code"
+                    className="bg-background border-border text-foreground focus:ring-gold focus:border-gold rounded-l-none h-10"
+                  />
+                </div>
+              </div>
+            </div>
+            
+            <Button 
+              type="submit" 
+              disabled={isGenerating}
+              className="w-full sm:w-auto bg-[#1a1625] hover:bg-[#251f35] text-gold/90 hover:text-gold border border-gold/20 hover:border-gold/50 shadow-[0_0_15px_rgba(212,175,55,0.1)] hover:shadow-[0_0_20px_rgba(212,175,55,0.2)] transition-all duration-300"
+            >
+              {isGenerating ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Link2 className="w-4 h-4 mr-2" />}
+              শর্ট লিংক তৈরি করুন
+            </Button>
+          </form>
         </div>
-      </div>
+
+        {/* List Card */}
+        <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
+          <div className="p-5 border-b border-border">
+            <h3 className="font-bold text-foreground flex items-center gap-2 text-lg">
+              <LinkIcon className="w-5 h-5 text-gold" />
+              আপনার শর্ট লিংকসমূহ
+            </h3>
+          </div>
+          
+          <div className="divide-y divide-border">
+            {isLoading ? (
+              <div className="p-12 text-center text-muted-foreground">
+                <Loader2 className="w-8 h-8 animate-spin mx-auto text-gold" />
+              </div>
+            ) : shortLinks?.length === 0 ? (
+              <div className="p-16 text-center flex flex-col items-center justify-center">
+                <div className="w-20 h-20 bg-muted/50 rounded-full flex items-center justify-center mb-4">
+                  <Link2Off className="w-10 h-10 text-muted-foreground opacity-50" />
+                </div>
+                <h3 className="text-xl font-medium text-foreground mb-4">এখানে কোনো শর্ট লিংক তৈরি করা হয়নি।</h3>
+                <Button 
+                  onClick={() => document.querySelector('input[type="url"]')?.focus()}
+                  className="bg-[#1a1625] hover:bg-[#251f35] text-gold/90 hover:text-gold border border-gold/20"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  আপনার প্রথম শর্ট লিংক তৈরি করুন
+                </Button>
+              </div>
+            ) : (
+              shortLinks?.map((link) => (
+                <div key={link.id} className="p-5 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between hover:bg-muted/30 transition">
+                  <div className="space-y-1 min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-gold text-lg">/s/{link.short_code}</span>
+                      <span className="px-2 py-0.5 rounded-full bg-muted border border-border text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">
+                        {link.clicks} Clicks
+                      </span>
+                    </div>
+                    <p className="text-sm text-muted-foreground truncate max-w-2xl" title={link.original_url}>
+                      {link.original_url}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      className="flex-1 sm:flex-none border-border bg-background hover:bg-muted text-foreground"
+                      onClick={() => copyToClipboard(link.short_code)}
+                    >
+                      <Copy className="w-4 h-4 sm:mr-2" />
+                      <span className="hidden sm:inline">কপি লিংক</span>
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10 px-3"
+                      onClick={() => handleDelete(link.id)}
+                      title="ডিলিট করুন"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
       </div>
     </AdminShell>
   );
