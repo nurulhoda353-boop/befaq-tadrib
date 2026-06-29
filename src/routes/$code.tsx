@@ -24,8 +24,8 @@ function ShortLinkRedirect() {
 
         if (fetchError || !data) {
           setError({
-            title: "লিংক খুঁজে পাওয়া যায়নি",
-            message: "দুঃখিত, এই লিংকটি আমাদের সিস্টেমে নেই অথবা ডিলিট করে দেওয়া হয়েছে।"
+            title: "লিংক নিষ্ক্রিয়।",
+            message: "লিংকটি মেয়াদ শেষ হয়েছে"
           });
           return;
         }
@@ -33,8 +33,8 @@ function ShortLinkRedirect() {
         // 2. Check active status
         if (data.is_active === false) {
           setError({
-            title: "লিংক নিষ্ক্রিয়",
-            message: "এই লিংকটি বর্তমানে অফ করে রাখা হয়েছে। পরবর্তীতে আবার চেষ্টা করুন।"
+            title: "লিংক নিষ্ক্রিয়।",
+            message: "লিংকটি মেয়াদ শেষ হয়েছে"
           });
           return;
         }
@@ -42,8 +42,8 @@ function ShortLinkRedirect() {
         // 3. Check expiration
         if (data.expires_at && new Date(data.expires_at) < new Date()) {
           setError({
-            title: "লিংকের মেয়াদ শেষ",
-            message: "এই লিংকের নির্দিষ্ট মেয়াদ শেষ হয়ে গেছে। এটি আর কাজ করবে না।"
+            title: "লিংক নিষ্ক্রিয়।",
+            message: "লিংকটি মেয়াদ শেষ হয়েছে"
           });
           return;
         }
@@ -74,20 +74,11 @@ function ShortLinkRedirect() {
   if (error) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
-        <div className="w-full max-w-md bg-card border border-border rounded-2xl shadow-sm p-8 text-center animate-in zoom-in-95 duration-300">
-          <div className="w-20 h-20 bg-destructive/10 text-destructive rounded-full flex items-center justify-center mx-auto mb-6">
-            <Link2Off className="w-10 h-10" />
-          </div>
-          <h1 className="text-2xl font-bold text-foreground mb-3">{error.title}</h1>
-          <p className="text-muted-foreground mb-8">
+        <div className="text-center animate-in fade-in duration-300">
+          <h1 className="text-3xl font-bold text-foreground mb-3">{error.title}</h1>
+          <p className="text-muted-foreground text-lg">
             {error.message}
           </p>
-          <Button asChild className="w-full bg-[#1a1625] hover:bg-[#251f35] text-gold/90 hover:text-gold border border-gold/20">
-            <Link to="/">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              মূল ওয়েবসাইটে ফিরে যান
-            </Link>
-          </Button>
         </div>
       </div>
     );
