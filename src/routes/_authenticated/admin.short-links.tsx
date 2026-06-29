@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { Link2, Copy, Plus, Loader2, Link as LinkIcon, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { AdminShell } from "@/components/admin/AdminShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -116,15 +117,14 @@ function AdminShortLinksPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold tracking-tight text-gold">লিংক সংক্ষিপ্তকরণ (URL Shortener)</h2>
-        <p className="text-white/60 text-sm mt-1">
-          বড় লিংকগুলোকে ছোট এবং সহজে শেয়ার করার উপযোগী করুন।
-        </p>
-      </div>
-
-      <div className="bg-white/5 border border-white/10 rounded-2xl p-6 relative overflow-hidden">
+    <AdminShell
+      breadcrumb="টুলস"
+      current="শর্ট লিংকস"
+      title="লিংক সংক্ষিপ্তকরণ (URL Shortener)"
+      subtitle="আপনার ওয়েবসাইটের বা বাইরের যেকোনো বড় লিংককে ছোট এবং শেয়ার করার উপযোগী করুন।"
+    >
+      <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+        <div className="bg-white/5 border border-white/10 rounded-2xl p-6 relative overflow-hidden">
         <div className="absolute top-0 right-0 p-12 bg-gold/5 blur-3xl rounded-full pointer-events-none" />
         
         <form onSubmit={handleCreate} className="space-y-4 relative z-10">
@@ -225,6 +225,6 @@ function AdminShortLinksPage() {
           )}
         </div>
       </div>
-    </div>
+    </AdminShell>
   );
 }
