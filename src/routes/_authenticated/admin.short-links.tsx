@@ -225,6 +225,7 @@ function AdminShortLinksPage() {
           )}
         </div>
       </div>
+      </div>
     </AdminShell>
   );
 }
