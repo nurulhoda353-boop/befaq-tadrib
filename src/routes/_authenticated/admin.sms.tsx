@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Save, Smartphone, MessageSquare, Clock, CheckCircle2, XCircle, Send } from "lucide-react";
+import { sendDirectSms } from "@/lib/notifications";
 
 export const Route = createFileRoute("/_authenticated/admin/sms")({
   component: AdminSMS,
@@ -67,20 +68,17 @@ function AdminSMS() {
   // Send Test SMS
   const sendTestMut = useMutation({
     mutationFn: async () => {
-      const { data, error } = await supabase.functions.invoke("send-sms", {
-        body: { phone_number: testPhone, message: testMessage },
-      });
-      if (error) throw error;
-      return data;
+      const res = await sendDirectSms(testPhone, testMessage);
+      if (!res.success) throw new Error(res.error || "Unknown error");
+      return res;
     },
-    onSuccess: (res) => {
-      if (res.success) toast.success("টেস্ট SMS পাঠানো হয়েছে!");
-      else toast.error("SMS পাঠাতে ব্যর্থ: " + (res.error || "Unknown error"));
+    onSuccess: () => {
+      toast.success("টেস্ট SMS পাঠানো হয়েছে!");
       setTestPhone("");
       setTestMessage("");
       queryClient.invalidateQueries({ queryKey: ["sms-logs"] });
     },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: any) => toast.error("SMS পাঠাতে ব্যর্থ: " + e.message),
   });
 
   const [formData, setFormData] = useState({
