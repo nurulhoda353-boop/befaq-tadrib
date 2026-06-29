@@ -5,9 +5,15 @@
 
 @custom-variant dark (&:is(.dark *));
 
+@font-face {
+  font-family: "BengaliNumbers";
+  src: local("SolaimanLipi"), local("Bornomala"), local("Siyam Rupali"), local("Kalpurush"), local("AdorshoLipi");
+  unicode-range: U+09E6-09EF, U+0030-0039;
+}
+
 @theme inline {
-  --font-sans: "Hind Siliguri", system-ui, sans-serif;
-  --font-display: "Hind Siliguri", system-ui, sans-serif;
+  --font-sans: "BengaliNumbers", "Hind Siliguri", system-ui, sans-serif;
+  --font-display: "BengaliNumbers", "Hind Siliguri", system-ui, sans-serif;
   --font-arabic: "Amiri", "Scheherazade New", serif;
 
   --radius-sm: calc(var(--radius) - 4px);

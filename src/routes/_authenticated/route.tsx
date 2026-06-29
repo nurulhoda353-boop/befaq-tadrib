@@ -8,7 +8,19 @@ export const Route = createFileRoute("/_authenticated")({
     if (error || !data.user) {
       throw redirect({ to: "/auth" });
     }
-    return { user: data.user };
+    
+    // Fetch role and permissions
+    const { data: roles } = await supabase
+      .from("user_roles")
+      .select("role, permissions")
+      .eq("user_id", data.user.id)
+      .single();
+      
+    return { 
+      user: data.user, 
+      role: roles?.role || 'viewer',
+      permissions: roles?.permissions || []
+    };
   },
   component: () => <Outlet />,
 });

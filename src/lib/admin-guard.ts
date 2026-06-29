@@ -7,9 +7,10 @@ export async function ensureAdmin() {
   if (!uid) throw redirect({ to: "/auth" });
   const { data: roles } = await supabase
     .from("user_roles")
-    .select("role")
+    .select("role, permissions")
     .eq("user_id", uid)
-    .eq("role", "admin");
+    .in("role", ["admin", "editor"]);
+    
   if (!roles || roles.length === 0) {
     throw redirect({ to: "/" });
   }

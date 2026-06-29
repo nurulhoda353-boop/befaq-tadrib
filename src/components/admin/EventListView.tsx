@@ -13,9 +13,11 @@ import {
   XCircle,
   Loader2,
   Image as ImageIcon,
+  Users,
 } from "lucide-react";
 import { toast } from "sonner";
 import { AdminShell } from "@/components/admin/AdminShell";
+import { useRouterState } from "@tanstack/react-router";
 import {
   Dialog,
   DialogContent,
@@ -90,6 +92,15 @@ export function EventListView({ tabs }: { tabs: React.ReactNode }) {
   const [editing, setEditing] = useState<EventItem | null>(null);
   const [creating, setCreating] = useState(false);
   const [deleting, setDeleting] = useState<EventItem | null>(null);
+  const [managing, setManaging] = useState<EventItem | null>(null);
+
+  const context = useRouterState({ select: (s: any) => s.matches.find((m: any) => m.routeId === '/_authenticated')?.context }) as any;
+  const role = context?.role || 'viewer';
+  const permissions = context?.permissions || [];
+  
+  const canCreate = role === 'admin' || permissions.includes('events.full') || permissions.includes('events.create');
+  const canManage = role === 'admin' || permissions.includes('events.full') || permissions.includes('events.manage') || permissions.includes('events.manage_no_delete');
+  const canDelete = role === 'admin' || permissions.includes('events.full') || permissions.includes('events.manage');
 
   const { data: events = [], isLoading } = useQuery({
     queryKey: ["admin-events"],
@@ -151,12 +162,14 @@ export function EventListView({ tabs }: { tabs: React.ReactNode }) {
       breadcrumb="কন্টেন্ট"
       current="ইভেন্ট"
       actions={
-        <button
-          onClick={() => setCreating(true)}
-          className="inline-flex h-10 items-center gap-1.5 rounded-lg bg-gradient-to-r from-primary to-primary-dark px-4 text-sm font-semibold text-primary-foreground shadow-soft transition hover:shadow-elegant"
-        >
-          <Plus size={15} /> নতুন ইভেন্ট
-        </button>
+        canCreate ? (
+          <button
+            onClick={() => setCreating(true)}
+            className="inline-flex h-10 items-center gap-1.5 rounded-lg bg-gradient-to-r from-primary to-primary-dark px-4 text-sm font-semibold text-primary-foreground shadow-soft transition hover:shadow-elegant"
+          >
+            <Plus size={15} /> নতুন ইভেন্ট
+          </button>
+        ) : null
       }
     >
       {tabs}
@@ -257,22 +270,36 @@ export function EventListView({ tabs }: { tabs: React.ReactNode }) {
                     </div>
                   </div>
                   <div className="flex shrink-0 items-center gap-1" onClick={(ev) => ev.stopPropagation()}>
-                    <button
-                      type="button"
-                      onClick={() => setEditing(e)}
-                      title="Edit"
-                      className="grid h-9 w-9 place-items-center rounded-lg text-muted-foreground transition hover:bg-muted hover:text-foreground"
-                    >
-                      <Pencil size={15} />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setDeleting(e)}
-                      title="Delete"
-                      className="grid h-9 w-9 place-items-center rounded-lg text-destructive transition hover:bg-destructive/10"
-                    >
-                      <Trash2 size={15} />
-                    </button>
+                    {role === 'admin' && (
+                      <button
+                        type="button"
+                        onClick={() => setManaging(e)}
+                        title="রেজিস্ট্রেশন ম্যানেজার সেট করুন"
+                        className="grid h-9 w-9 place-items-center rounded-lg text-blue-500 transition hover:bg-blue-500/10"
+                      >
+                        <Users size={15} />
+                      </button>
+                    )}
+                    {canManage && (
+                      <button
+                        type="button"
+                        onClick={() => setEditing(e)}
+                        title="Edit"
+                        className="grid h-9 w-9 place-items-center rounded-lg text-muted-foreground transition hover:bg-muted hover:text-foreground"
+                      >
+                        <Pencil size={15} />
+                      </button>
+                    )}
+                    {canDelete && (
+                      <button
+                        type="button"
+                        onClick={() => setDeleting(e)}
+                        title="Delete"
+                        className="grid h-9 w-9 place-items-center rounded-lg text-destructive transition hover:bg-destructive/10"
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    )}
                   </div>
                 </li>
               );
@@ -292,6 +319,12 @@ export function EventListView({ tabs }: { tabs: React.ReactNode }) {
         onSaved={() => {
           queryClient.invalidateQueries({ queryKey: ["admin-events"] });
         }}
+      />
+
+      <ManageManagersDialog 
+        event={managing} 
+        open={!!managing} 
+        onClose={() => setManaging(null)} 
       />
 
       {/* Delete confirmation */}
@@ -669,4 +702,138 @@ function toLocalInput(iso: string) {
   const d = new Date(iso);
   const pad = (n: number) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+// -------------------- Event Managers Dialog --------------------
+
+function ManageManagersDialog({
+  event,
+  open,
+  onClose,
+}: {
+  event: EventItem | null;
+  open: boolean;
+  onClose: () => void;
+}) {
+  const [loading, setLoading] = useState(false);
+  const [managers, setManagers] = useState<string[]>([]); // array of user_ids
+
+  const { data: allUsers = [], isLoading: loadingUsers } = useQuery({
+    queryKey: ["admin-users-editors"],
+    queryFn: async () => {
+      // Get all editors
+      const { data, error } = await supabase.rpc("get_all_users");
+      if (error) throw error;
+      return (data as any[]).filter(u => u.role === "editor");
+    },
+    enabled: open,
+  });
+
+  const { data: existingManagers, isLoading: loadingManagers } = useQuery({
+    queryKey: ["event-managers", event?.id],
+    queryFn: async () => {
+      if (!event) return [];
+      const { data, error } = await supabase.from("event_managers").select("user_id").eq("event_id", event.id);
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!event && open,
+  });
+
+  useEffect(() => {
+    if (existingManagers) {
+      setManagers(existingManagers.map((m: any) => m.user_id));
+    } else if (!open) {
+      setManagers([]);
+    }
+  }, [existingManagers, open]);
+
+  const toggleManager = (userId: string) => {
+    setManagers(prev => 
+      prev.includes(userId) ? prev.filter(id => id !== userId) : [...prev, userId]
+    );
+  };
+
+  const handleSave = async () => {
+    if (!event) return;
+    setLoading(true);
+    try {
+      // 1. Delete all existing managers for this event
+      await supabase.from("event_managers").delete().eq("event_id", event.id);
+      
+      // 2. Insert new ones
+      if (managers.length > 0) {
+        const inserts = managers.map(uid => ({ event_id: event.id, user_id: uid }));
+        const { error } = await supabase.from("event_managers").insert(inserts);
+        if (error) throw error;
+      }
+      
+      toast.success("ম্যানেজার এক্সেস আপডেট হয়েছে");
+      onClose();
+    } catch (e: any) {
+      toast.error(e.message || "আপডেট ব্যর্থ হয়েছে");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>ইভেন্ট ম্যানেজার সেট করুন</DialogTitle>
+          <div className="text-sm text-muted-foreground mt-2">
+            ইভেন্ট: <strong>{event?.title}</strong>
+          </div>
+          <p className="text-xs text-muted-foreground mt-1">
+            যাদেরকে আপনি পারমিশন দেবেন, তারা এই ইভেন্টের রেজিস্ট্রেশন কনফার্ম ও এডিট করতে পারবেন। 
+            (শুধুমাত্র "সম্পাদক" রোল পাওয়া ইউজারদের লিস্টে দেখা যাচ্ছে)
+          </p>
+        </DialogHeader>
+
+        <div className="py-4 space-y-3 min-h-[150px] max-h-[60vh] overflow-y-auto">
+          {loadingUsers || loadingManagers ? (
+            <div className="flex justify-center py-8 text-muted-foreground"><Loader2 className="animate-spin" /></div>
+          ) : allUsers.length === 0 ? (
+            <div className="text-center py-6 text-sm text-muted-foreground">
+              কোনো "সম্পাদক" (Editor) পাওয়া যায়নি। আগে ইউজার ম্যানেজমেন্ট থেকে কাউকে সম্পাদক রোল দিন।
+            </div>
+          ) : (
+            allUsers.map(user => (
+              <label key={user.id} className="flex cursor-pointer items-center justify-between rounded-lg border border-border bg-card p-3 shadow-sm transition hover:border-primary/30">
+                <div className="flex items-center gap-3">
+                  <div className="grid h-8 w-8 place-items-center rounded-full bg-primary/10 font-bold text-primary text-xs">
+                    {user.email.slice(0, 1).toUpperCase()}
+                  </div>
+                  <span className="font-medium text-foreground text-sm">{user.email}</span>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={managers.includes(user.id)}
+                  onChange={() => toggleManager(user.id)}
+                  className="h-5 w-5 rounded border-border text-primary focus:ring-primary/20"
+                />
+              </label>
+            ))
+          )}
+        </div>
+
+        <div className="flex justify-end gap-3 pt-4 border-t border-border">
+          <button
+            onClick={onClose}
+            className="h-9 px-4 rounded-md border border-border text-sm hover:bg-muted transition"
+          >
+            বাতিল
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={loading || loadingUsers || loadingManagers}
+            className="h-9 px-4 rounded-md bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary-dark transition flex items-center gap-2"
+          >
+            {loading ? <Loader2 size={16} className="animate-spin" /> : "সেভ করুন"}
+          </button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
 }

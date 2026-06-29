@@ -54,32 +54,52 @@ export function AdminSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  
+  // Use generic useRouteContext since we might be deep in the tree
+  const { role, permissions } = (useRouterState({ select: (s) => s.matches.find(m => m.routeId === '/_authenticated')?.context }) as any) || { role: 'viewer', permissions: [] };
 
   const isActive = (url: string, exact?: boolean) =>
     exact ? pathname === url : pathname === url || pathname.startsWith(url + "/");
 
-  const renderItems = (items: typeof cms) => (
-    <SidebarMenu>
-      {items.map((item) => {
-        const active = isActive(item.url, (item as any).exact);
-        return (
-          <SidebarMenuItem key={item.url}>
-            <SidebarMenuButton
-              asChild
-              isActive={active}
-              tooltip={item.title}
-              className="group/item h-10 rounded-lg text-primary-foreground/70 hover:bg-white/[0.06] hover:text-primary-foreground data-[active=true]:bg-gradient-to-r data-[active=true]:from-gold/25 data-[active=true]:to-gold/5 data-[active=true]:text-gold-bright data-[active=true]:shadow-[inset_2px_0_0_0_var(--gold-bright)]"
-            >
-              <Link to={item.url as any}>
-                <item.icon className="h-[18px] w-[18px] shrink-0" />
-                <span className="font-medium tracking-tight">{item.title}</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        );
-      })}
-    </SidebarMenu>
-  );
+  const filterItems = (items: typeof cms) => {
+    if (role === 'admin') return items;
+    return items.filter(item => {
+      if (item.url === '/admin') return true; // Always allow dashboard home
+      if (item.url === '/admin/settings' || item.url === '/admin/users') return false; // Hard block system routes for editors
+      
+      // url example: /admin/notices -> permission key: notices
+      const key = item.url.split('/').pop();
+      return permissions?.includes(key);
+    });
+  };
+
+  const renderItems = (items: typeof cms) => {
+    const filtered = filterItems(items);
+    if (filtered.length === 0) return null;
+    
+    return (
+      <SidebarMenu>
+        {filtered.map((item) => {
+          const active = isActive(item.url, (item as any).exact);
+          return (
+            <SidebarMenuItem key={item.url}>
+              <SidebarMenuButton
+                asChild
+                isActive={active}
+                tooltip={item.title}
+                className="group/item h-10 rounded-lg text-primary-foreground/70 hover:bg-white/[0.06] hover:text-primary-foreground data-[active=true]:bg-gradient-to-r data-[active=true]:from-gold/25 data-[active=true]:to-gold/5 data-[active=true]:text-gold-bright data-[active=true]:shadow-[inset_2px_0_0_0_var(--gold-bright)]"
+              >
+                <Link to={item.url as any}>
+                  <item.icon className="h-[18px] w-[18px] shrink-0" />
+                  <span className="font-medium tracking-tight">{item.title}</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          );
+        })}
+      </SidebarMenu>
+    );
+  };
 
   return (
     <Sidebar

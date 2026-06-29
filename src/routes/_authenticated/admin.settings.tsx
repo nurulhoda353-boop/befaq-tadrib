@@ -1,12 +1,17 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminShell } from "@/components/admin/AdminShell";
-import { Lock, Save, Loader2, KeyRound, Globe, Phone, Mail, Building2 } from "lucide-react";
+import { Lock, Save, Loader2, KeyRound, Globe, Phone, Mail, Building2, Plug, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/admin/settings")({
+  beforeLoad: ({ context }) => {
+    if ((context as any).role !== 'admin') {
+      throw redirect({ to: "/admin" });
+    }
+  },
   component: AdminSettings,
 });
 
@@ -24,6 +29,14 @@ function AdminSettings() {
   const [facebook, setFacebook] = useState("");
   const [contactEmail, setContactEmail] = useState("");
   const [contactPhone, setContactPhone] = useState("");
+
+  // Integration Settings State
+  const [resendApiKey, setResendApiKey] = useState("");
+  const [waAccessToken, setWaAccessToken] = useState("");
+  const [waPhoneNumberId, setWaPhoneNumberId] = useState("");
+  const [smsGatewayUrl, setSmsGatewayUrl] = useState("");
+  const [smsApiKey, setSmsApiKey] = useState("");
+  const [smsSenderId, setSmsSenderId] = useState("");
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -75,6 +88,47 @@ function AdminSettings() {
     onSuccess: () => {
       toast.success("গ্লোবাল সেটিংস আপডেট হয়েছে!");
       queryClient.invalidateQueries({ queryKey: ["global-settings"] });
+    },
+    onError: (err: any) => toast.error(err.message || "আপডেট করতে সমস্যা হয়েছে।"),
+  });
+
+  const { data: integrationSettings, isLoading: isLoadingIntegration } = useQuery({
+    queryKey: ["integration-settings"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("integration_settings").select("*").eq('id', 1).single();
+      if (error && error.code !== "PGRST116") throw error;
+      return data;
+    },
+  });
+
+  useEffect(() => {
+    if (integrationSettings) {
+      setResendApiKey(integrationSettings.resend_api_key || "");
+      setWaAccessToken(integrationSettings.wa_access_token || "");
+      setWaPhoneNumberId(integrationSettings.wa_phone_number_id || "");
+      setSmsGatewayUrl(integrationSettings.sms_gateway_url || "");
+      setSmsApiKey(integrationSettings.sms_api_key || "");
+      setSmsSenderId(integrationSettings.sms_sender_id || "");
+    }
+  }, [integrationSettings]);
+
+  const updateIntegrationMutation = useMutation({
+    mutationFn: async () => {
+      const payload = {
+        resend_api_key: resendApiKey,
+        wa_access_token: waAccessToken,
+        wa_phone_number_id: waPhoneNumberId,
+        sms_gateway_url: smsGatewayUrl,
+        sms_api_key: smsApiKey,
+        sms_sender_id: smsSenderId,
+      };
+      
+      const { error } = await supabase.from("integration_settings").update(payload).eq('id', 1);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("অটোমেশন এপিআই সেটিংস আপডেট হয়েছে!");
+      queryClient.invalidateQueries({ queryKey: ["integration-settings"] });
     },
     onError: (err: any) => toast.error(err.message || "আপডেট করতে সমস্যা হয়েছে।"),
   });
@@ -208,6 +262,110 @@ function AdminSettings() {
                     onChange={(e) => setFacebook(e.target.value)}
                     placeholder="https://facebook.com/..."
                     className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none transition focus:border-primary/50 focus:ring-2 focus:ring-primary/20"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+        </section>
+
+        {/* Integration API Settings */}
+        <section className="relative overflow-hidden rounded-2xl border border-border/60 bg-card p-6 shadow-soft transition-all hover:shadow-elegant md:col-span-2">
+          <div className="mb-6 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-purple-500/10 text-purple-600">
+                <Plug size={20} />
+              </div>
+              <div>
+                <h2 className="font-display text-lg font-bold text-foreground">অটোমেশন ও API সেটিংস</h2>
+                <p className="text-sm text-muted-foreground">রেজিস্ট্রেশন কনফার্মেশনের জন্য SMS, WhatsApp এবং Email এপিআই</p>
+              </div>
+            </div>
+            <button
+              onClick={() => updateIntegrationMutation.mutate()}
+              disabled={updateIntegrationMutation.isPending || isLoadingIntegration}
+              className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-purple-600 to-purple-800 px-6 text-sm font-medium text-white shadow-sm transition hover:shadow-elegant disabled:opacity-70"
+            >
+              {updateIntegrationMutation.isPending ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+              API সেভ করুন
+            </button>
+          </div>
+
+          {isLoadingIntegration ? (
+            <div className="flex h-32 items-center justify-center text-muted-foreground">
+              <Loader2 className="animate-spin" />
+            </div>
+          ) : (
+            <div className="grid gap-5 md:grid-cols-3">
+              {/* Resend Email */}
+              <div className="space-y-4 rounded-xl border border-border/50 bg-muted/20 p-4">
+                <div className="mb-2 font-medium text-foreground flex items-center gap-2"><Mail size={16} className="text-blue-500"/> Email (Resend)</div>
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Resend API Key</label>
+                  <input
+                    type="password"
+                    value={resendApiKey}
+                    onChange={(e) => setResendApiKey(e.target.value)}
+                    placeholder="re_..."
+                    className="h-9 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none transition focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20"
+                  />
+                </div>
+              </div>
+              
+              {/* Meta WhatsApp */}
+              <div className="space-y-4 rounded-xl border border-border/50 bg-muted/20 p-4">
+                <div className="mb-2 font-medium text-foreground flex items-center gap-2"><Phone size={16} className="text-green-500"/> WhatsApp (Meta)</div>
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Access Token</label>
+                  <input
+                    type="password"
+                    value={waAccessToken}
+                    onChange={(e) => setWaAccessToken(e.target.value)}
+                    placeholder="EAA..."
+                    className="h-9 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none transition focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Phone Number ID</label>
+                  <input
+                    type="text"
+                    value={waPhoneNumberId}
+                    onChange={(e) => setWaPhoneNumberId(e.target.value)}
+                    placeholder="123456789"
+                    className="h-9 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none transition focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20"
+                  />
+                </div>
+              </div>
+
+              {/* Local SMS */}
+              <div className="space-y-4 rounded-xl border border-border/50 bg-muted/20 p-4">
+                <div className="mb-2 font-medium text-foreground flex items-center gap-2"><MessageSquare size={16} className="text-orange-500"/> Local SMS (API)</div>
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium text-muted-foreground">API URL / Endpoint</label>
+                  <input
+                    type="text"
+                    value={smsGatewayUrl}
+                    onChange={(e) => setSmsGatewayUrl(e.target.value)}
+                    placeholder="https://api.sms-provider.com..."
+                    className="h-9 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none transition focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium text-muted-foreground">API Key</label>
+                  <input
+                    type="password"
+                    value={smsApiKey}
+                    onChange={(e) => setSmsApiKey(e.target.value)}
+                    className="h-9 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none transition focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Sender ID</label>
+                  <input
+                    type="text"
+                    value={smsSenderId}
+                    onChange={(e) => setSmsSenderId(e.target.value)}
+                    className="h-9 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none transition focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20"
                   />
                 </div>
               </div>

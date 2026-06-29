@@ -1,4 +1,5 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { useRouterState } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -76,8 +77,14 @@ export function AdminRegistrationsView({ tabs }: { tabs: React.ReactNode }) {
   const [customDate, setCustomDate] = useState("");
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
 
+  const context = useRouterState({ select: (s) => s.matches.find((m) => m.routeId === '/_authenticated')?.context }) as any;
+  const role = context?.role || 'viewer';
+  const permissions = context?.permissions || [];
+  
+  const canDeleteReg = role === 'admin' || permissions.includes('events.full') || permissions.includes('events.manage');
+
   // Fetch events that have registration enabled
-  const { data: events = [], isLoading: loadingEvents } = useQuery({
+  const { data: allEvents = [], isLoading: loadingEvents } = useQuery({
     queryKey: ["admin-events-reg"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -89,6 +96,23 @@ export function AdminRegistrationsView({ tabs }: { tabs: React.ReactNode }) {
       return data as EventShort[];
     },
   });
+
+  const { data: myManagers } = useQuery({
+    queryKey: ["my-event-managers"],
+    queryFn: async () => {
+      if (role === 'admin') return null; // Admins don't need this
+      const { data, error } = await supabase.from("event_managers").select("event_id");
+      if (error) throw error;
+      return data?.map((d: any) => d.event_id) || [];
+    },
+    enabled: role !== 'admin',
+  });
+
+  const events = useMemo(() => {
+    if (role === 'admin') return allEvents;
+    if (!myManagers) return [];
+    return allEvents.filter(e => myManagers.includes(e.id));
+  }, [allEvents, role, myManagers]);
 
   const selectedEvent = events.find((e) => e.id === selectedEventId);
 
@@ -133,6 +157,7 @@ export function AdminRegistrationsView({ tabs }: { tabs: React.ReactNode }) {
         .from("event_registrations")
         .select("serial_no")
         .eq("event_id", selectedEvent.id)
+        .not("serial_no", "is", null)
         .order("serial_no", { ascending: false })
         .limit(1);
 
@@ -173,6 +198,7 @@ export function AdminRegistrationsView({ tabs }: { tabs: React.ReactNode }) {
         .from("event_registrations")
         .select("serial_no")
         .eq("event_id", selectedEvent.id)
+        .not("serial_no", "is", null)
         .order("serial_no", { ascending: false })
         .limit(1);
 
@@ -646,8 +672,8 @@ export function AdminRegistrationsView({ tabs }: { tabs: React.ReactNode }) {
       }}>
         <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader className="flex flex-row items-center justify-between">
-            <DialogTitle>রেজিস্ট্রেশন বিস্তারিত</DialogTitle>
-            {viewReg && (
+            <DialogTitle>রেজিস্ট্রেশনের বিস্তারিত</DialogTitle>
+            {viewReg && canDeleteReg && (
               <button
                 onClick={() => {
                   if (window.confirm("আপনি কি নিশ্চিত যে এই রেজিস্ট্রেশন মুছে ফেলতে চান?")) {

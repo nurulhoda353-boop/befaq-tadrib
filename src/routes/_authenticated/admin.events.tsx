@@ -5,6 +5,8 @@ import { AdminRegistrationsView } from "@/components/admin/AdminRegistrationsVie
 import { EventListView } from "@/components/admin/EventListView";
 import { Database, CalendarPlus } from "lucide-react";
 
+import { useRouterState } from "@tanstack/react-router";
+
 export const Route = createFileRoute("/_authenticated/admin/events")({
   beforeLoad: ensureAdmin,
   component: AdminEventsWrapper,
@@ -12,8 +14,12 @@ export const Route = createFileRoute("/_authenticated/admin/events")({
 
 function AdminEventsWrapper() {
   const [activeTab, setActiveTab] = useState<"registrations" | "events">("registrations");
+  
+  // Use generic useRouteContext to safely get context deep in tree
+  const context = useRouterState({ select: (s) => s.matches.find(m => m.routeId === '/_authenticated')?.context }) as any;
+  const role = context?.role || 'viewer';
 
-  const Tabs = (
+  const Tabs = role === 'admin' ? (
     <div className="mb-6 mt-2 flex justify-center w-full">
       <div className="inline-flex items-center rounded-full bg-muted/60 p-1.5 backdrop-blur-md border border-border shadow-inner">
         <button
@@ -38,11 +44,15 @@ function AdminEventsWrapper() {
         </button>
       </div>
     </div>
-  );
+  ) : <div className="mb-6" />; // Spacing for non-admins
 
   return (
     <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-      {activeTab === "registrations" ? <AdminRegistrationsView tabs={Tabs} /> : <EventListView tabs={Tabs} />}
+      {role === 'admin' ? (
+        activeTab === "registrations" ? <AdminRegistrationsView tabs={Tabs} /> : <EventListView tabs={Tabs} />
+      ) : (
+        <AdminRegistrationsView tabs={Tabs} />
+      )}
     </div>
   );
 }
