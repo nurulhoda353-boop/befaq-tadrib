@@ -48,31 +48,18 @@ export async function sendConfirmationDetails(regId: string) {
  */
 export async function sendDirectSms(phone: string, message: string) {
   try {
-    // 1. Fetch SMS Settings
-    const { data: settings, error: settingsErr } = await supabase
+    // 1. Fetch All Active SMS Settings ordered by Priority
+    const { data: gateways, error: settingsErr } = await supabase
       .from("sms_settings")
       .select("*")
       .eq("is_active", true)
-      .single();
+      .order("priority", { ascending: true });
 
-    if (settingsErr || !settings) {
-      return { success: false, error: "SMS service is not configured or inactive" };
+    if (settingsErr || !gateways || gateways.length === 0) {
+      return { success: false, error: "কোনো অ্যাকটিভ SMS গেটওয়ে পাওয়া যায়নি" };
     }
 
-    if (settings.provider !== "textbee" || !settings.api_key || !settings.device_id) {
-      return { success: false, error: "TextBee configuration is incomplete" };
-    }
-
-    // 2. Create a pending log entry
-    const { data: logEntry } = await supabase
-      .from("sms_logs")
-      .insert({ phone_number: phone, message, status: "pending" })
-      .select()
-      .single();
-
-    const logId = logEntry?.id;
-
-    // 3. Format Phone Number (Ensure +880)
+    // 2. Format Phone Number (Ensure +880)
     let cleanPhone = phone.replace(/\D/g, "");
     if (cleanPhone.startsWith("0") && cleanPhone.length === 11) {
       cleanPhone = "+88" + cleanPhone;
@@ -80,90 +67,148 @@ export async function sendDirectSms(phone: string, message: string) {
       cleanPhone = "+" + cleanPhone;
     }
 
-    // 4. Call TextBee API
-    const textbeeUrl = `https://api.textbee.dev/api/v1/gateway/devices/${settings.device_id}/send-sms`;
-    
     let isSuccess = false;
     let statusText = "failed";
-    let textbeeResponse: any = {};
+    let lastError = "No gateways available";
+    let successfulGatewayId = null;
+    let apiResponse: any = {};
 
-    try {
-      const res = await fetch(textbeeUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": settings.api_key,
-        },
-        body: JSON.stringify({
-          recipients: [cleanPhone],
-          message: message,
-        }),
-      });
+    // 3. Fallback Loop
+    for (const gateway of gateways) {
+      if (!gateway.api_key) continue;
 
-      const responseText = await res.text();
       try {
-        textbeeResponse = JSON.parse(responseText);
-      } catch (e) {
-        textbeeResponse = { raw: responseText };
-      }
+        if (gateway.provider === "textbee" || gateway.provider === "owntext") {
+          if (!gateway.device_id) continue;
+          
+          const baseUrl = gateway.provider === "owntext" ? "https://owntext.vercel.app" : "https://api.textbee.dev";
+          const apiUrl = `${baseUrl}/api/v1/gateway/devices/${gateway.device_id}/send-sms`;
+          
+          let res = await fetch(apiUrl, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "x-api-key": gateway.api_key,
+            },
+            body: JSON.stringify({
+              recipients: [cleanPhone],
+              message: message,
+            }),
+          }).catch(async (e) => {
+            // CORS Fallback for local dev
+            console.log("CORS issue, trying proxy...");
+            return fetch(`https://corsproxy.io/?url=${encodeURIComponent(apiUrl)}`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json", "x-api-key": gateway.api_key },
+              body: JSON.stringify({ recipients: [cleanPhone], message: message }),
+            });
+          });
 
-      if (res.ok) {
-        isSuccess = true;
-        statusText = "sent";
-      } else {
-        console.error("TextBee API Error:", responseText);
-      }
-    } catch (apiError: any) {
-      console.error("TextBee Fetch Error (Could be CORS):", apiError);
-      textbeeResponse = { error: apiError.message || String(apiError) };
-      
-      // If it's a CORS error or network error, let's try via a CORS proxy as a fallback
-      try {
-        console.log("Attempting fallback via CORS proxy...");
-        const proxyUrl = `https://corsproxy.io/?url=${encodeURIComponent(textbeeUrl)}`;
-        const fallbackRes = await fetch(proxyUrl, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-api-key": settings.api_key,
-          },
-          body: JSON.stringify({
-            recipients: [cleanPhone],
-            message: message,
-          }),
-        });
-        
-        const fallbackText = await fallbackRes.text();
-        try {
-          textbeeResponse = JSON.parse(fallbackText);
-        } catch(e) {
-          textbeeResponse = { raw: fallbackText };
+          const responseText = await res.text();
+          try { apiResponse = JSON.parse(responseText); } catch(e) { apiResponse = { raw: responseText }; }
+
+          if (res.ok) {
+            isSuccess = true;
+            statusText = "sent";
+            successfulGatewayId = gateway.id;
+            break; // Stop loop, SMS sent successfully
+          } else {
+            lastError = `${gateway.provider} (${gateway.name}): ${responseText}`;
+            console.error(lastError);
+            continue; // Try next gateway
+          }
+        } 
+        else if (gateway.provider === "smsnetbd") {
+          const url = "https://api.sms.net.bd/sendsms";
+          const payload = {
+            api_key: gateway.api_key,
+            msg: message,
+            to: cleanPhone.replace('+88', ''),
+            sender_id: gateway.sender_id || ""
+          };
+          
+          let res = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+          }).catch(async () => {
+             return fetch(\`https://corsproxy.io/?url=\${encodeURIComponent(url)}\`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+             });
+          });
+
+          const responseText = await res.text();
+          try { apiResponse = JSON.parse(responseText); } catch(e) { apiResponse = { raw: responseText }; }
+
+          // sms.net.bd returns { error: 0, ... } on success
+          if (res.ok && (!apiResponse.error || apiResponse.error === 0 || apiResponse.error === "0")) {
+            isSuccess = true;
+            statusText = "sent";
+            successfulGatewayId = gateway.id;
+            break;
+          } else {
+            lastError = \`SMS.net.bd (\${gateway.name}): \${responseText}\`;
+            console.error(lastError);
+            continue;
+          }
         }
-        
-        if (fallbackRes.ok) {
-          isSuccess = true;
-          statusText = "sent";
+        else if (gateway.provider === "bulksmsbd" || gateway.provider === "greenweb" || gateway.provider === "other") {
+          // Placeholder for other BD Bulk SMS APIs. Usually they are simple GET requests.
+          // e.g. BulkSmsBD
+          const senderId = gateway.sender_id || "";
+          const url = `http://bulksmsbd.net/api/smsapi?api_key=${gateway.api_key}&type=text&number=${cleanPhone.replace('+88', '')}&senderid=${senderId}&message=${encodeURIComponent(message)}`;
+          
+          const res = await fetch(url).catch(async () => {
+             return fetch(`https://corsproxy.io/?url=${encodeURIComponent(url)}`);
+          });
+
+          const responseText = await res.text();
+          apiResponse = { raw: responseText };
+
+          // Typically they return something with success code
+          if (res.ok && !responseText.toLowerCase().includes("error")) {
+            isSuccess = true;
+            statusText = "sent";
+            successfulGatewayId = gateway.id;
+            break;
+          } else {
+            lastError = `Bulk API (${gateway.name}): ${responseText}`;
+            console.error(lastError);
+            continue;
+          }
         }
-      } catch (fallbackError: any) {
-        console.error("Fallback also failed:", fallbackError);
-        textbeeResponse = { originalError: textbeeResponse, fallbackError: fallbackError.message };
+      } catch (err: any) {
+        lastError = `Exception in gateway ${gateway.name}: ${err.message}`;
+        console.error(lastError);
+        continue;
       }
     }
 
-    // 5. Update Log
-    if (logId) {
-      await supabase
-        .from("sms_logs")
-        .update({
-          status: statusText,
-          provider_response: textbeeResponse,
-        })
-        .eq("id", logId);
+    // 4. Update Gateway Usage Count if successful
+    if (isSuccess && successfulGatewayId) {
+      const successfulGateway = gateways.find(g => g.id === successfulGatewayId);
+      if (successfulGateway) {
+        await supabase
+          .from("sms_settings")
+          .update({ usage_count: (successfulGateway.usage_count || 0) + 1 })
+          .eq("id", successfulGatewayId);
+      }
     }
 
-    return { success: isSuccess, status: statusText, response: textbeeResponse };
+    // 5. Create Log Entry
+    await supabase.from("sms_logs").insert({
+      phone_number: phone,
+      message,
+      status: statusText,
+      api_response: apiResponse,
+    });
+
+    if (isSuccess) return { success: true };
+    return { success: false, error: lastError };
   } catch (err: any) {
-    console.error("Error in sendDirectSms:", err);
+    console.error("SMS Error:", err);
     return { success: false, error: err.message };
   }
 }

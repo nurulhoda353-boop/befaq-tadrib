@@ -114,8 +114,8 @@ export function RegistrationManager({ event }: { event: EventData }) {
 
       if (error) throw error;
 
-      // Call notification placeholder
-      await sendConfirmationDetails(regIdStr, nextSerial, {});
+      // Send SMS notification
+      await sendConfirmationDetails(regId);
 
       return { regIdStr, nextSerial };
     },
@@ -148,6 +148,10 @@ export function RegistrationManager({ event }: { event: EventData }) {
           confirmed_at: new Date().toISOString(),
         }).eq("id", reg.id);
         if (error) throw error;
+        
+        // Send SMS notification
+        await sendConfirmationDetails(reg.id);
+
         nextSerial++;
       }
     },
@@ -220,7 +224,7 @@ export function RegistrationManager({ event }: { event: EventData }) {
   };
 
   const filteredRegs = useMemo(() => {
-    return registrations.filter((reg) => {
+    let result = registrations.filter((reg) => {
       if (statusFilter !== "all" && reg.status !== statusFilter) return false;
       
       if (timeFilter !== "all") {
@@ -260,6 +264,18 @@ export function RegistrationManager({ event }: { event: EventData }) {
       }
       return true;
     });
+
+    // Sort: Confirmed (highest serial) first, then pending (newest first)
+    result.sort((a, b) => {
+      if (a.serial_no !== null && b.serial_no !== null) {
+        return b.serial_no - a.serial_no;
+      }
+      if (a.serial_no !== null) return -1;
+      if (b.serial_no !== null) return 1;
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    });
+
+    return result;
   }, [registrations, searchQuery, statusFilter, timeFilter, customDate]);
 
   const stats = useMemo(() => {

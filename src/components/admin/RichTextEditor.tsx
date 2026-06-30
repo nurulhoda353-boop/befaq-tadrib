@@ -25,6 +25,9 @@ import {
   Minus,
   Plus,
   ChevronDown,
+  Undo,
+  Redo,
+  Type as TypeIcon, Pilcrow, Settings2, MoveUp, MoveDown, CaseSensitive, AlignStartVertical, Baseline, TypeOutline, Scissors, Palette
 } from 'lucide-react'
 
 /* ------------------------------------------------------------------ */
@@ -32,7 +35,6 @@ import {
 /* ------------------------------------------------------------------ */
 const FontSize = Extension.create({
   name: 'fontSize',
-
   addGlobalAttributes() {
     return [
       {
@@ -53,11 +55,122 @@ const FontSize = Extension.create({
 })
 
 /* ------------------------------------------------------------------ */
-/*  Custom LineHeight extension – stores line-height on block nodes   */
+/*  Custom FontFamily extension                                       */
+/* ------------------------------------------------------------------ */
+const FontFamily = Extension.create({
+  name: 'fontFamily',
+  addGlobalAttributes() {
+    return [{
+      types: ['textStyle'],
+      attributes: {
+        fontFamily: {
+          default: null,
+          parseHTML: (el) => el.style.fontFamily?.replace(/['"]+/g, '') || null,
+          renderHTML: (attrs) => {
+            if (!attrs.fontFamily) return {}
+            return { style: `font-family: ${attrs.fontFamily}` }
+          },
+        },
+      },
+    }]
+  },
+})
+
+/* ------------------------------------------------------------------ */
+/*  Custom FontWeight extension                                       */
+/* ------------------------------------------------------------------ */
+const FontWeight = Extension.create({
+  name: 'fontWeight',
+  addGlobalAttributes() {
+    return [{
+      types: ['textStyle'],
+      attributes: {
+        fontWeight: {
+          default: null,
+          parseHTML: (el) => el.style.fontWeight || null,
+          renderHTML: (attrs) => {
+            if (!attrs.fontWeight) return {}
+            return { style: `font-weight: ${attrs.fontWeight}` }
+          },
+        },
+      },
+    }]
+  },
+})
+
+/* ------------------------------------------------------------------ */
+/*  Custom TextColor extension                                        */
+/* ------------------------------------------------------------------ */
+const TextColor = Extension.create({
+  name: 'textColor',
+  addGlobalAttributes() {
+    return [{
+      types: ['textStyle'],
+      attributes: {
+        color: {
+          default: null,
+          parseHTML: (el) => el.style.color || null,
+          renderHTML: (attrs) => {
+            if (!attrs.color) return {}
+            return { style: `color: ${attrs.color}` }
+          },
+        },
+      },
+    }]
+  },
+})
+
+/* ------------------------------------------------------------------ */
+/*  Custom BaselineShift extension                                    */
+/* ------------------------------------------------------------------ */
+const BaselineShift = Extension.create({
+  name: 'baselineShift',
+  addGlobalAttributes() {
+    return [{
+      types: ['textStyle'],
+      attributes: {
+        baselineShift: {
+          default: null,
+          parseHTML: (el) => el.style.top || null,
+          renderHTML: (attrs) => {
+            if (!attrs.baselineShift) return {}
+            return { style: `position: relative; top: ${attrs.baselineShift}` }
+          },
+        },
+      },
+    }]
+  },
+})
+
+/* ------------------------------------------------------------------ */
+/*  Custom LetterSpacing (Tracking) extension - on textStyle          */
+/* ------------------------------------------------------------------ */
+const LetterSpacing = Extension.create({
+  name: 'letterSpacing',
+  addGlobalAttributes() {
+    return [
+      {
+        types: ['textStyle'],
+        attributes: {
+          letterSpacing: {
+            default: null,
+            parseHTML: (el) => el.style.letterSpacing || null,
+            renderHTML: (attrs) => {
+              if (!attrs.letterSpacing) return {}
+              return { style: `letter-spacing: ${attrs.letterSpacing}` }
+            },
+          },
+        },
+      },
+    ]
+  },
+})
+
+/* ------------------------------------------------------------------ */
+/*  Custom LineHeight (Leading) extension - on block nodes            */
 /* ------------------------------------------------------------------ */
 const LineHeight = Extension.create({
   name: 'lineHeight',
-
   addGlobalAttributes() {
     return [
       {
@@ -78,27 +191,72 @@ const LineHeight = Extension.create({
 })
 
 /* ------------------------------------------------------------------ */
-/*  Custom LetterSpacing extension                                    */
+/*  Custom ParagraphIndent extension                                  */
 /* ------------------------------------------------------------------ */
-const LetterSpacing = Extension.create({
-  name: 'letterSpacing',
-
+const ParagraphIndent = Extension.create({
+  name: 'paragraphIndent',
   addGlobalAttributes() {
-    return [
-      {
-        types: ['heading', 'paragraph'],
-        attributes: {
-          letterSpacing: {
-            default: null,
-            parseHTML: (el) => el.style.letterSpacing || null,
-            renderHTML: (attrs) => {
-              if (!attrs.letterSpacing) return {}
-              return { style: `letter-spacing: ${attrs.letterSpacing}` }
-            },
+    return [{
+      types: ['heading', 'paragraph'],
+      attributes: {
+        marginLeft: {
+          default: null,
+          parseHTML: (el) => el.style.marginLeft || null,
+          renderHTML: (attrs) => {
+            if (!attrs.marginLeft) return {}
+            return { style: `margin-left: ${attrs.marginLeft}` }
+          },
+        },
+        marginRight: {
+          default: null,
+          parseHTML: (el) => el.style.marginRight || null,
+          renderHTML: (attrs) => {
+            if (!attrs.marginRight) return {}
+            return { style: `margin-right: ${attrs.marginRight}` }
+          },
+        },
+        textIndent: {
+          default: null,
+          parseHTML: (el) => el.style.textIndent || null,
+          renderHTML: (attrs) => {
+            if (!attrs.textIndent) return {}
+            return { style: `text-indent: ${attrs.textIndent}` }
           },
         },
       },
-    ]
+    }]
+  },
+})
+
+/* ------------------------------------------------------------------ */
+/*  Custom ParagraphSpacing extension                                 */
+/* ------------------------------------------------------------------ */
+const ParagraphSpacing = Extension.create({
+  name: 'paragraphSpacing',
+  addGlobalAttributes() {
+    return [{
+      types: ['heading', 'paragraph'],
+      attributes: {
+        marginTop: {
+          default: null,
+          parseHTML: (el) => el.style.marginTop || null,
+          renderHTML: (attrs) => {
+            if (!attrs.marginTop) return {}
+            // Use !important to override tailwind prose defaults if needed, 
+            // but inline styles usually win anyway. 
+            return { style: `margin-top: ${attrs.marginTop} !important` }
+          },
+        },
+        marginBottom: {
+          default: null,
+          parseHTML: (el) => el.style.marginBottom || null,
+          renderHTML: (attrs) => {
+            if (!attrs.marginBottom) return {}
+            return { style: `margin-bottom: ${attrs.marginBottom} !important` }
+          },
+        },
+      },
+    }]
   },
 })
 
@@ -128,15 +286,21 @@ export function RichTextEditor({ value, onChange }: RichTextEditorProps) {
       TextAlign.configure({ types: ['heading', 'paragraph'] }),
       Underline,
       FontSize,
+      FontFamily,
+      FontWeight,
+      TextColor,
+      BaselineShift,
       LineHeight,
       LetterSpacing,
+      ParagraphIndent,
+      ParagraphSpacing,
     ],
     content: value,
     onUpdate: ({ editor: e }) => onChange(e.getHTML()),
     editorProps: {
       attributes: {
         class:
-          'prose prose-sm sm:prose-base dark:prose-invert max-w-none focus:outline-none min-h-full px-5 py-4',
+          'prose prose-sm sm:prose-base dark:prose-invert max-w-none focus:outline-none min-h-full px-5 py-4 prose-p:my-1 prose-headings:mb-2 prose-headings:mt-3 prose-ul:my-1 prose-ol:my-1 prose-li:my-0.5',
       },
       handleClick: (_view, _pos, event) => {
         if (formatPainterActive && savedMarksRef.current) {
@@ -252,7 +416,43 @@ export function RichTextEditor({ value, onChange }: RichTextEditorProps) {
 
   if (!editor) return null
 
+
+  /* ---------- Character Panel Helpers ---------- */
+  const getCurrentFontFamily = () => editor.getAttributes('textStyle').fontFamily || ''
+  const setFontFamily = (val) => editor.chain().focus().setMark('textStyle', { fontFamily: val }).run()
+  
+  const getCurrentFontWeight = () => editor.getAttributes('textStyle').fontWeight || '400'
+  const setFontWeight = (val) => editor.chain().focus().setMark('textStyle', { fontWeight: val }).run()
+
+  const getCurrentTextColor = () => editor.getAttributes('textStyle').color || '#000000'
+  const setTextColor = (val) => editor.chain().focus().setMark('textStyle', { color: val }).run()
+
+  const getCurrentBaselineShift = () => {
+    const val = editor.getAttributes('textStyle').baselineShift
+    return val ? parseFloat(val) : 0
+  }
+  const setBaselineShift = (val) => editor.chain().focus().setMark('textStyle', { baselineShift: `${val}px` }).run()
+
+  const getCurrentTracking = () => {
+    const val = editor.getAttributes('textStyle').letterSpacing
+    return val ? parseFloat(val).toString() : '0'
+  }
+  const setTracking = (val) => editor.chain().focus().setMark('textStyle', { letterSpacing: `${val}px` }).run()
+
+  /* ---------- Paragraph Panel Helpers ---------- */
+  const getParaAttr = (attr, defaultVal = '0') => {
+    const val = editor.getAttributes('paragraph')[attr] || editor.getAttributes('heading')[attr]
+    return val ? parseFloat(val).toString() : defaultVal
+  }
+  const setParaAttr = (attr, val, unit = 'px') => {
+    editor.chain().focus().updateAttributes('paragraph', { [attr]: `${val}${unit}` }).updateAttributes('heading', { [attr]: `${val}${unit}` }).run()
+  }
+
+  const [showCharPanel, setShowCharPanel] = useState(false)
+  const [showParaPanel2, setShowParaPanel2] = useState(false)
+
   const fontSize = getCurrentFontSize()
+
 
   return (
     <div
@@ -262,290 +462,143 @@ export function RichTextEditor({ value, onChange }: RichTextEditorProps) {
           : 'border-border focus-within:border-gold focus-within:ring-1 focus-within:ring-gold'
       }`}
     >
-      {/* ========== TOOLBAR ROW 1 — Formatting ========== */}
-      <div className="flex flex-wrap items-center gap-0.5 border-b border-border bg-muted/40 px-1.5 py-1">
-        {/* Block type selector */}
-        <div className="flex items-center gap-0.5 pr-1.5 border-r border-border/50">
-          <ToolbarBtn
-            active={editor.isActive('paragraph') && !editor.isActive('heading')}
-            onClick={() => editor.chain().focus().setParagraph().run()}
-            title="সাধারণ টেক্সট"
-          >
-            <Type size={14} />
-          </ToolbarBtn>
-          <ToolbarBtn
-            active={editor.isActive('heading', { level: 1 })}
-            onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-            title="শিরোনাম ১"
-          >
-            <Heading1 size={14} />
-          </ToolbarBtn>
-          <ToolbarBtn
-            active={editor.isActive('heading', { level: 2 })}
-            onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-            title="শিরোনাম ২"
-          >
-            <Heading2 size={14} />
-          </ToolbarBtn>
-          <ToolbarBtn
-            active={editor.isActive('heading', { level: 3 })}
-            onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-            title="শিরোনাম ৩"
-          >
-            <Heading3 size={14} />
-          </ToolbarBtn>
+      
+      {/* ========== ILLUSTRATOR STYLE TOOLBAR ========== */}
+      <div className="flex flex-col border-b border-border bg-muted/20">
+        
+        {/* Undo/Redo & Quick Tools Row */}
+        <div className="flex items-center gap-1 border-b border-border/50 px-2 py-1 bg-muted/40">
+          <ToolbarBtn active={false} disabled={!editor.can().undo()} onClick={() => editor.chain().focus().undo().run()} title="Undo (Ctrl+Z)"><Undo size={14} /></ToolbarBtn>
+          <ToolbarBtn active={false} disabled={!editor.can().redo()} onClick={() => editor.chain().focus().redo().run()} title="Redo (Ctrl+Y)"><Redo size={14} /></ToolbarBtn>
+          <div className="w-[1px] h-4 bg-border/50 mx-1"></div>
+          <ToolbarBtn active={editor.isActive('link')} onClick={setLink} title="Add Link"><LinkIcon size={14} /></ToolbarBtn>
+          <ToolbarBtn active={false} onClick={() => editor.chain().focus().unsetLink().run()} disabled={!editor.isActive('link')} title="Remove Link"><Unlink size={14} /></ToolbarBtn>
+          <div className="w-[1px] h-4 bg-border/50 mx-1"></div>
+          <ToolbarBtn active={formatPainterActive} onClick={captureFormatPainter} title="Format Painter" className={formatPainterActive ? 'ring-1 ring-gold' : ''}><Paintbrush size={14} /></ToolbarBtn>
+          
+          <div className="ml-auto flex items-center gap-2">
+            <button type="button" onClick={() => { setShowCharPanel(!showCharPanel); setShowParaPanel2(false); }} className={`text-[11px] font-bold px-2 py-1 rounded transition ${showCharPanel ? 'bg-gold/20 text-gold-bright' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`}>
+              Character (A)
+            </button>
+            <button type="button" onClick={() => { setShowParaPanel2(!showParaPanel2); setShowCharPanel(false); }} className={`text-[11px] font-bold px-2 py-1 rounded transition ${showParaPanel2 ? 'bg-gold/20 text-gold-bright' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`}>
+              Paragraph (¶)
+            </button>
+          </div>
         </div>
 
-        {/* Font size — number input with +/- */}
-        <div className="flex items-center gap-0 px-1.5 border-r border-border/50">
-          <button
-            type="button"
-            onClick={() => setFontSize(fontSize - 1)}
-            className="grid h-7 w-6 place-items-center rounded-l border border-r-0 border-border bg-background text-muted-foreground hover:bg-muted hover:text-foreground transition"
-            title="ছোট করুন"
-          >
-            <Minus size={11} />
-          </button>
-          <input
-            type="number"
-            min={8}
-            max={72}
-            value={fontSize}
-            onChange={(e) => setFontSize(parseInt(e.target.value, 10) || 16)}
-            className="h-7 w-10 border border-border bg-background text-center text-xs font-bold text-foreground outline-none focus:border-gold [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-            title="ফন্ট সাইজ (px)"
-          />
-          <button
-            type="button"
-            onClick={() => setFontSize(fontSize + 1)}
-            className="grid h-7 w-6 place-items-center rounded-r border border-l-0 border-border bg-background text-muted-foreground hover:bg-muted hover:text-foreground transition"
-            title="বড় করুন"
-          >
-            <Plus size={11} />
-          </button>
-        </div>
-
-        {/* Bold / Italic / Underline */}
-        <div className="flex items-center gap-0.5 px-1.5 border-r border-border/50">
-          <ToolbarBtn
-            active={editor.isActive('bold')}
-            onClick={() => editor.chain().focus().toggleBold().run()}
-            title="Bold (Ctrl+B)"
-          >
-            <Bold size={14} />
-          </ToolbarBtn>
-          <ToolbarBtn
-            active={editor.isActive('italic')}
-            onClick={() => editor.chain().focus().toggleItalic().run()}
-            title="Italic (Ctrl+I)"
-          >
-            <Italic size={14} />
-          </ToolbarBtn>
-          <ToolbarBtn
-            active={editor.isActive('underline')}
-            onClick={() => editor.chain().focus().toggleUnderline().run()}
-            title="Underline (Ctrl+U)"
-          >
-            <UnderlineIcon size={14} />
-          </ToolbarBtn>
-        </div>
-
-        {/* Format Painter */}
-        <div className="flex items-center gap-0.5 px-1.5 border-r border-border/50">
-          <ToolbarBtn
-            active={formatPainterActive}
-            onClick={captureFormatPainter}
-            title="ফরম্যাট পেইন্টার — প্রথমে ফরম্যাটেড টেক্সট সিলেক্ট করে ক্লিক করুন, তারপর যেখানে এপ্লাই করতে চান সেখানে সিলেক্ট করুন"
-            className={formatPainterActive ? 'ring-1 ring-gold' : ''}
-          >
-            <Paintbrush size={14} />
-          </ToolbarBtn>
-        </div>
-
-        {/* Links */}
-        <div className="flex items-center gap-0.5 pl-1.5">
-          <ToolbarBtn
-            active={editor.isActive('link')}
-            onClick={setLink}
-            title="লিংক যুক্ত করুন"
-          >
-            <LinkIcon size={14} />
-          </ToolbarBtn>
-          <ToolbarBtn
-            active={false}
-            onClick={() => editor.chain().focus().unsetLink().run()}
-            disabled={!editor.isActive('link')}
-            title="লিংক সরান"
-          >
-            <Unlink size={14} />
-          </ToolbarBtn>
-        </div>
-      </div>
-
-      {/* ========== TOOLBAR ROW 2 — Paragraph / Alignment (Illustrator style) ========== */}
-      <div className="flex flex-wrap items-center gap-0.5 border-b border-border bg-muted/20 px-1.5 py-1">
-        {/* Text alignment */}
-        <div className="flex items-center gap-0.5 pr-1.5 border-r border-border/50">
-          <ToolbarBtn
-            active={editor.isActive({ textAlign: 'left' })}
-            onClick={() => editor.chain().focus().setTextAlign('left').run()}
-            title="বাম সারিবদ্ধ"
-          >
-            <AlignLeft size={14} />
-          </ToolbarBtn>
-          <ToolbarBtn
-            active={editor.isActive({ textAlign: 'center' })}
-            onClick={() => editor.chain().focus().setTextAlign('center').run()}
-            title="মধ্য সারিবদ্ধ"
-          >
-            <AlignCenter size={14} />
-          </ToolbarBtn>
-          <ToolbarBtn
-            active={editor.isActive({ textAlign: 'right' })}
-            onClick={() => editor.chain().focus().setTextAlign('right').run()}
-            title="ডান সারিবদ্ধ"
-          >
-            <AlignRight size={14} />
-          </ToolbarBtn>
-          <ToolbarBtn
-            active={editor.isActive({ textAlign: 'justify' })}
-            onClick={() => editor.chain().focus().setTextAlign('justify').run()}
-            title="সমান সারিবদ্ধ (Justify)"
-          >
-            <AlignJustify size={14} />
-          </ToolbarBtn>
-        </div>
-
-        {/* Lists */}
-        <div className="flex items-center gap-0.5 px-1.5 border-r border-border/50">
-          <ToolbarBtn
-            active={editor.isActive('bulletList')}
-            onClick={() => editor.chain().focus().toggleBulletList().run()}
-            title="বুলেট তালিকা"
-          >
-            <List size={14} />
-          </ToolbarBtn>
-          <ToolbarBtn
-            active={editor.isActive('orderedList')}
-            onClick={() => editor.chain().focus().toggleOrderedList().run()}
-            title="ক্রমিক তালিকা"
-          >
-            <ListOrdered size={14} />
-          </ToolbarBtn>
-        </div>
-
-        {/* Paragraph settings toggle (Illustrator-inspired) */}
-        <div className="relative pl-1.5">
-          <button
-            type="button"
-            onClick={() => setShowParaPanel(!showParaPanel)}
-            className={`inline-flex items-center gap-1 rounded px-2 py-1 text-[11px] font-semibold transition ${
-              showParaPanel
-                ? 'bg-gold/20 text-gold-bright'
-                : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-            }`}
-            title="প্যারাগ্রাফ সেটিংস (Adobe Illustrator স্টাইল)"
-          >
-            <span>¶</span> প্যারাগ্রাফ
-            <ChevronDown size={12} className={`transition-transform ${showParaPanel ? 'rotate-180' : ''}`} />
-          </button>
-
-          {/* Paragraph settings panel (Illustrator-style) */}
-          {showParaPanel && (
-            <div className="absolute left-0 top-full z-50 mt-1 w-64 rounded-xl border border-border bg-card p-4 shadow-xl animate-in fade-in slide-in-from-top-2 duration-200">
-              <h4 className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-1.5">
-                <span className="text-gold text-sm">¶</span> প্যারাগ্রাফ সেটিংস
-              </h4>
-
-              {/* Line Height */}
-              <div className="mb-3">
-                <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1 block">
-                  লাইন স্পেসিং (Line Height)
-                </label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="range"
-                    min="1"
-                    max="3"
-                    step="0.1"
-                    value={getCurrentLineHeight()}
-                    onChange={(e) => setLineHeight(e.target.value)}
-                    className="flex-1 h-1.5 accent-gold cursor-pointer"
-                  />
-                  <span className="text-xs font-mono font-bold text-foreground w-8 text-right">
-                    {parseFloat(getCurrentLineHeight()).toFixed(1)}
-                  </span>
-                </div>
+        {/* Character Panel (Expanded) */}
+        {showCharPanel && (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-3 bg-card border-b border-border/50 shadow-inner animate-in fade-in slide-in-from-top-1">
+            <div className="col-span-2 flex flex-col gap-2">
+              <div className="flex items-center gap-2">
+                <label className="text-[10px] font-semibold text-muted-foreground uppercase w-20">Font Family:</label>
+                <select value={getCurrentFontFamily()} onChange={(e) => setFontFamily(e.target.value)} className="flex-1 h-7 border border-border bg-background text-xs px-2 rounded focus:border-gold outline-none">
+                  <option value="">Default</option>
+                  <option value="SolaimanLipi">SolaimanLipi</option>
+                  <option value="Arial">Arial</option>
+                  <option value="Times New Roman">Times New Roman</option>
+                  <option value="Courier New">Courier New</option>
+                </select>
               </div>
-
-              {/* Letter Spacing */}
-              <div className="mb-3">
-                <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1 block">
-                  অক্ষর ব্যবধান (Letter Spacing)
-                </label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="range"
-                    min="-2"
-                    max="10"
-                    step="0.5"
-                    value={getCurrentLetterSpacing()}
-                    onChange={(e) => setLetterSpacing(e.target.value)}
-                    className="flex-1 h-1.5 accent-gold cursor-pointer"
-                  />
-                  <span className="text-xs font-mono font-bold text-foreground w-10 text-right">
-                    {parseFloat(getCurrentLetterSpacing()).toFixed(1)}px
-                  </span>
-                </div>
-              </div>
-
-              {/* Quick presets */}
-              <div>
-                <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 block">
-                  প্রিসেট
-                </label>
-                <div className="flex flex-wrap gap-1.5">
-                  {[
-                    { label: 'ঘন', lh: '1.2', ls: '0' },
-                    { label: 'সাধারণ', lh: '1.6', ls: '0' },
-                    { label: 'বিরল', lh: '2.0', ls: '0.5' },
-                    { label: 'ঢিলা', lh: '2.4', ls: '1' },
-                  ].map((p) => (
-                    <button
-                      key={p.label}
-                      type="button"
-                      onClick={() => {
-                        setLineHeight(p.lh)
-                        setLetterSpacing(p.ls)
-                      }}
-                      className="rounded-md border border-border bg-background px-2.5 py-1 text-[10px] font-semibold text-muted-foreground transition hover:border-gold/50 hover:bg-gold/5 hover:text-gold"
-                    >
-                      {p.label}
-                    </button>
-                  ))}
+              <div className="flex items-center gap-2">
+                <label className="text-[10px] font-semibold text-muted-foreground uppercase w-20">Font Style:</label>
+                <select value={getCurrentFontWeight()} onChange={(e) => setFontWeight(e.target.value)} className="flex-1 h-7 border border-border bg-background text-xs px-2 rounded focus:border-gold outline-none">
+                  <option value="100">Thin (100)</option>
+                  <option value="300">Light (300)</option>
+                  <option value="400">Regular (400)</option>
+                  <option value="500">Medium (500)</option>
+                  <option value="600">SemiBold (600)</option>
+                  <option value="700">Bold (700)</option>
+                  <option value="900">Black (900)</option>
+                </select>
+                <div className="flex items-center border border-border rounded">
+                  <ToolbarBtn active={editor.isActive('italic')} onClick={() => editor.chain().focus().toggleItalic().run()} title="Italic"><Italic size={14} /></ToolbarBtn>
+                  <ToolbarBtn active={editor.isActive('underline')} onClick={() => editor.chain().focus().toggleUnderline().run()} title="Underline"><UnderlineIcon size={14} /></ToolbarBtn>
                 </div>
               </div>
             </div>
-          )}
-        </div>
+
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-2" title="Font Size">
+                <span className="text-xs text-muted-foreground font-mono w-4">T</span>
+                <input type="number" value={fontSize} onChange={(e) => setFontSize(parseInt(e.target.value) || 16)} className="w-16 h-7 border border-border bg-background text-xs px-2 rounded focus:border-gold outline-none" /> px
+              </div>
+              <div className="flex items-center gap-2" title="Tracking / Letter Spacing">
+                <span className="text-xs text-muted-foreground font-mono w-4">VA</span>
+                <input type="number" step="0.5" value={getCurrentTracking()} onChange={(e) => setTracking(e.target.value)} className="w-16 h-7 border border-border bg-background text-xs px-2 rounded focus:border-gold outline-none" /> px
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-2" title="Leading / Line Height">
+                <AlignStartVertical size={14} className="text-muted-foreground w-4" />
+                <input type="number" step="0.1" value={getCurrentLineHeight()} onChange={(e) => setLineHeight(e.target.value)} className="w-16 h-7 border border-border bg-background text-xs px-2 rounded focus:border-gold outline-none" />
+              </div>
+              <div className="flex items-center gap-2" title="Baseline Shift">
+                <Baseline size={14} className="text-muted-foreground w-4" />
+                <input type="number" step="1" value={getCurrentBaselineShift()} onChange={(e) => setBaselineShift(parseInt(e.target.value) || 0)} className="w-16 h-7 border border-border bg-background text-xs px-2 rounded focus:border-gold outline-none" /> px
+              </div>
+            </div>
+
+            <div className="col-span-2 flex items-center gap-2">
+              <label className="text-[10px] font-semibold text-muted-foreground uppercase w-20">Text Color:</label>
+              <input type="color" value={getCurrentTextColor()} onChange={(e) => setTextColor(e.target.value)} className="w-8 h-8 rounded border-none cursor-pointer p-0" />
+            </div>
+          </div>
+        )}
+
+        {/* Paragraph Panel (Expanded) */}
+        {showParaPanel2 && (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-3 bg-card border-b border-border/50 shadow-inner animate-in fade-in slide-in-from-top-1">
+             <div className="col-span-2 flex flex-col gap-2">
+              <div className="flex items-center gap-1 bg-background border border-border p-0.5 rounded w-fit">
+                <ToolbarBtn active={editor.isActive('paragraph') && !editor.isActive('heading')} onClick={() => editor.chain().focus().setParagraph().run()} title="Paragraph"><Pilcrow size={14} /></ToolbarBtn>
+                <ToolbarBtn active={editor.isActive('heading', { level: 1 })} onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()} title="H1"><Heading1 size={14} /></ToolbarBtn>
+                <ToolbarBtn active={editor.isActive('heading', { level: 2 })} onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} title="H2"><Heading2 size={14} /></ToolbarBtn>
+                <ToolbarBtn active={editor.isActive('heading', { level: 3 })} onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()} title="H3"><Heading3 size={14} /></ToolbarBtn>
+              </div>
+              <div className="flex items-center gap-1 bg-background border border-border p-0.5 rounded w-fit">
+                <ToolbarBtn active={editor.isActive({ textAlign: 'left' })} onClick={() => editor.chain().focus().setTextAlign('left').run()} title="Align Left"><AlignLeft size={14} /></ToolbarBtn>
+                <ToolbarBtn active={editor.isActive({ textAlign: 'center' })} onClick={() => editor.chain().focus().setTextAlign('center').run()} title="Align Center"><AlignCenter size={14} /></ToolbarBtn>
+                <ToolbarBtn active={editor.isActive({ textAlign: 'right' })} onClick={() => editor.chain().focus().setTextAlign('right').run()} title="Align Right"><AlignRight size={14} /></ToolbarBtn>
+                <ToolbarBtn active={editor.isActive({ textAlign: 'justify' })} onClick={() => editor.chain().focus().setTextAlign('justify').run()} title="Justify"><AlignJustify size={14} /></ToolbarBtn>
+              </div>
+              <div className="flex items-center gap-1 bg-background border border-border p-0.5 rounded w-fit">
+                <ToolbarBtn active={editor.isActive('bulletList')} onClick={() => editor.chain().focus().toggleBulletList().run()} title="Bullet List"><List size={14} /></ToolbarBtn>
+                <ToolbarBtn active={editor.isActive('orderedList')} onClick={() => editor.chain().focus().toggleOrderedList().run()} title="Numbered List"><ListOrdered size={14} /></ToolbarBtn>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-2" title="Left Indent">
+                <span className="text-[10px] text-muted-foreground w-16">Left Indent</span>
+                <input type="number" step="5" value={getParaAttr('marginLeft')} onChange={(e) => setParaAttr('marginLeft', e.target.value)} className="w-16 h-7 border border-border bg-background text-xs px-2 rounded focus:border-gold outline-none" /> px
+              </div>
+              <div className="flex items-center gap-2" title="Right Indent">
+                <span className="text-[10px] text-muted-foreground w-16">Right Indent</span>
+                <input type="number" step="5" value={getParaAttr('marginRight')} onChange={(e) => setParaAttr('marginRight', e.target.value)} className="w-16 h-7 border border-border bg-background text-xs px-2 rounded focus:border-gold outline-none" /> px
+              </div>
+              <div className="flex items-center gap-2" title="First Line Indent">
+                <span className="text-[10px] text-muted-foreground w-16">1st Line</span>
+                <input type="number" step="5" value={getParaAttr('textIndent')} onChange={(e) => setParaAttr('textIndent', e.target.value)} className="w-16 h-7 border border-border bg-background text-xs px-2 rounded focus:border-gold outline-none" /> px
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-2" title="Space Before Paragraph">
+                <span className="text-[10px] text-muted-foreground w-16">Space Before</span>
+                <input type="number" step="5" value={getParaAttr('marginTop')} onChange={(e) => setParaAttr('marginTop', e.target.value)} className="w-16 h-7 border border-border bg-background text-xs px-2 rounded focus:border-gold outline-none" /> px
+              </div>
+              <div className="flex items-center gap-2" title="Space After Paragraph">
+                <span className="text-[10px] text-muted-foreground w-16">Space After</span>
+                <input type="number" step="5" value={getParaAttr('marginBottom')} onChange={(e) => setParaAttr('marginBottom', e.target.value)} className="w-16 h-7 border border-border bg-background text-xs px-2 rounded focus:border-gold outline-none" /> px
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Format painter indicator */}
-      {formatPainterActive && (
-        <div className="bg-gold/10 border-b border-gold/30 px-3 py-1.5 text-[11px] font-semibold text-gold-bright flex items-center gap-2">
-          <Paintbrush size={13} />
-          <span>ফরম্যাট পেইন্টার সক্রিয় — যেখানে এপ্লাই করতে চান সেখানের টেক্সট সিলেক্ট করে ক্লিক করুন</span>
-          <button
-            type="button"
-            onClick={() => { savedMarksRef.current = null; setFormatPainterActive(false) }}
-            className="ml-auto text-[10px] underline hover:text-gold"
-          >
-            বাতিল
-          </button>
-        </div>
-      )}
-
-      {/* ========== EDITOR BODY ========== */}
+{/* ========== EDITOR BODY ========== */}
       <div 
         className="bg-background h-[400px] overflow-y-auto custom-scrollbar" 
         onClick={() => {
