@@ -7,7 +7,7 @@
 
 @font-face {
   font-family: "BengaliNumbers";
-  src: local("SolaimanLipi"), local("Bornomala"), local("Siyam Rupali"), local("Kalpurush"), local("AdorshoLipi");
+  src: local("SolaimanLipi"), local("Bornomala"), url("https://fonts.maateen.me/solaiman-lipi/solaimanlipi-normal-v1.0.woff2") format("woff2"), url("https://fonts.maateen.me/solaiman-lipi/solaimanlipi-normal-v1.0.ttf") format("truetype");
   unicode-range: U+09E6-09EF, U+0030-0039;
 }
 
