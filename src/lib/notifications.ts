@@ -132,7 +132,7 @@ export async function sendDirectSms(phone: string, message: string) {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload)
           }).catch(async () => {
-             return fetch(\`https://corsproxy.io/?url=\${encodeURIComponent(url)}\`, {
+             return fetch(`https://corsproxy.io/?url=${encodeURIComponent(url)}`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload)
@@ -149,7 +149,7 @@ export async function sendDirectSms(phone: string, message: string) {
             successfulGatewayId = gateway.id;
             break;
           } else {
-            lastError = \`SMS.net.bd (\${gateway.name}): \${responseText}\`;
+            lastError = `SMS.net.bd (${gateway.name}): ${responseText}`;
             console.error(lastError);
             continue;
           }
