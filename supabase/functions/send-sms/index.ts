@@ -7,7 +7,6 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
@@ -22,118 +21,207 @@ serve(async (req) => {
       })
     }
 
-    // Initialize Supabase client with Service Role key to bypass RLS
-    // We need service role to read sms_settings which is hidden from anon/regular users
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // Fetch the active SMS settings (TextBee)
-    const { data: settings, error: settingsError } = await supabaseClient
-      .from('sms_settings')
-      .select('*')
-      .eq('is_active', true)
-      .single()
+    // 1. Fetch All Active SMS Settings ordered by Priority
+    const { data: gateways, error: settingsErr } = await supabaseClient
+      .from("sms_settings")
+      .select("*")
+      .eq("is_active", true)
+      .order("priority", { ascending: true })
 
-    if (settingsError || !settings) {
-      console.error('SMS Settings not found or inactive:', settingsError)
-      return new Response(JSON.stringify({ error: 'SMS service is not configured or inactive' }), {
+    if (settingsErr || !gateways || gateways.length === 0) {
+      console.error('SMS Settings not found or inactive:', settingsErr)
+      return new Response(JSON.stringify({ error: 'কোনো অ্যাকটিভ SMS গেটওয়ে পাওয়া যায়নি' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 400,
       })
     }
 
-    if (settings.provider !== 'textbee' || !settings.api_key || !settings.device_id) {
-      return new Response(JSON.stringify({ error: 'TextBee configuration is incomplete' }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400,
-      })
+    // 2. Format Phone Number (Ensure +880)
+    let cleanPhone = phone_number.replace(/\D/g, "");
+    if (cleanPhone.startsWith("0") && cleanPhone.length === 11) {
+      cleanPhone = "+88" + cleanPhone;
+    } else if (!cleanPhone.startsWith("+")) {
+      cleanPhone = "+" + cleanPhone;
     }
 
-    // Log the SMS as pending
-    const { data: logEntry, error: logError } = await supabaseClient
-      .from('sms_logs')
-      .insert({
-        phone_number,
-        message,
-        status: 'pending'
-      })
-      .select()
-      .single()
-      
-    if (logError) {
-      console.error("Failed to insert log:", logError)
-    }
-
-    const logId = logEntry?.id;
-
-    // Call TextBee API
-    // Doc: POST https://api.textbee.dev/api/v1/gateway/devices/{DEVICE_ID}/send-sms
-    // Header: x-api-key
-    // Body: { "recipients": [phone_number], "message": message }
-    
-    let textbeeResponse;
     let isSuccess = false;
-    let statusText = 'failed';
+    let statusText = "failed";
+    let lastError = "No gateways available";
+    let successfulGatewayId = null;
+    let apiResponse: any = {};
 
-    try {
-      // Clean phone number (ensure +880 format for BD)
-      let cleanPhone = phone_number.replace(/\D/g, '');
-      if (cleanPhone.startsWith('0') && cleanPhone.length === 11) {
-        cleanPhone = '+88' + cleanPhone;
-      } else if (!cleanPhone.startsWith('+')) {
-        cleanPhone = '+' + cleanPhone;
-      }
+    // 3. Fallback Loop
+    for (const gateway of gateways) {
+      if (!gateway.api_key) continue;
 
-      const res = await fetch(`https://api.textbee.dev/api/v1/gateway/devices/${settings.device_id}/send-sms`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': settings.api_key
-        },
-        body: JSON.stringify({
-          recipients: [cleanPhone],
-          message: message
-        })
-      });
-
-      const responseText = await res.text();
-      let responseJson;
       try {
-        responseJson = JSON.parse(responseText);
-      } catch (e) {
-        responseJson = { raw: responseText };
-      }
+        if (gateway.provider === "textbee") {
+          if (!gateway.device_id) continue;
+          
+          const apiUrl = `https://api.textbee.dev/api/v1/gateway/devices/${gateway.device_id}/send-sms`;
+          
+          let res = await fetch(apiUrl, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "x-api-key": gateway.api_key,
+            },
+            body: JSON.stringify({
+              recipients: [cleanPhone],
+              message: message,
+            }),
+          });
 
-      textbeeResponse = responseJson;
-      
-      if (res.ok) {
-        isSuccess = true;
-        statusText = 'sent';
-      } else {
-        console.error("TextBee API Error:", responseText);
+          const responseText = await res.text();
+          try { apiResponse = JSON.parse(responseText); } catch(e) { apiResponse = { raw: responseText }; }
+
+          if (res.ok) {
+            isSuccess = true;
+            statusText = "sent";
+            successfulGatewayId = gateway.id;
+            break;
+          } else {
+            lastError = `TextBee (${gateway.name}): ${responseText}`;
+            console.error(lastError);
+            continue;
+          }
+        }
+        else if (gateway.provider === "owntext") {
+          if (!gateway.device_id) continue;
+          
+          const apiUrl = `https://owntext.vercel.app/api/v1/send`;
+          
+          let res = await fetch(apiUrl, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${gateway.api_key}`,
+            },
+            body: JSON.stringify({
+              recipient: cleanPhone,
+              message: message,
+              device_id: gateway.device_id
+            }),
+          });
+
+          const responseText = await res.text();
+          try { apiResponse = JSON.parse(responseText); } catch(e) { apiResponse = { raw: responseText }; }
+
+          if (res.ok) {
+            isSuccess = true;
+            statusText = "sent";
+            successfulGatewayId = gateway.id;
+            break; 
+          } else {
+            lastError = `OwnText (${gateway.name}): ${responseText}`;
+            console.error(lastError);
+            continue; 
+          }
+        } 
+        else if (gateway.provider === "smsnetbd") {
+          const url = "https://api.sms.net.bd/sendsms";
+          const payload = {
+            api_key: gateway.api_key,
+            msg: message,
+            to: cleanPhone.replace('+88', ''),
+            sender_id: gateway.sender_id || ""
+          };
+          
+          let res = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+          });
+
+          const responseText = await res.text();
+          try { apiResponse = JSON.parse(responseText); } catch(e) { apiResponse = { raw: responseText }; }
+
+          if (res.ok && (!apiResponse.error || apiResponse.error === 0 || apiResponse.error === "0")) {
+            isSuccess = true;
+            statusText = "sent";
+            successfulGatewayId = gateway.id;
+            break;
+          } else {
+            lastError = `SMS.net.bd (${gateway.name}): ${responseText}`;
+            console.error(lastError);
+            continue;
+          }
+        }
+        else if (gateway.provider === "bulksmsbd") {
+          const senderId = gateway.sender_id || "";
+          const url = `http://bulksmsbd.net/api/smsapi?api_key=${gateway.api_key}&type=text&number=${cleanPhone.replace('+88', '')}&senderid=${senderId}&message=${encodeURIComponent(message)}`;
+          
+          const res = await fetch(url);
+
+          const responseText = await res.text();
+          apiResponse = { raw: responseText };
+
+          if (res.ok && !responseText.toLowerCase().includes("error")) {
+            isSuccess = true;
+            statusText = "sent";
+            successfulGatewayId = gateway.id;
+            break;
+          } else {
+            lastError = `BulkSMS BD (${gateway.name}): ${responseText}`;
+            console.error(lastError);
+            continue;
+          }
+        }
+        else if (gateway.provider === "greenweb") {
+          const url = `http://api.greenweb.com.bd/api.php?token=${gateway.api_key}&to=${cleanPhone}&message=${encodeURIComponent(message)}`;
+          
+          const res = await fetch(url);
+
+          const responseText = await res.text();
+          apiResponse = { raw: responseText };
+
+          if (res.ok && !responseText.toLowerCase().includes("error")) {
+            isSuccess = true;
+            statusText = "sent";
+            successfulGatewayId = gateway.id;
+            break;
+          } else {
+            lastError = `GreenWeb (${gateway.name}): ${responseText}`;
+            console.error(lastError);
+            continue;
+          }
+        }
+      } catch (err: any) {
+        lastError = `Exception in gateway ${gateway.name}: ${err.message}`;
+        console.error(lastError);
+        continue;
       }
-    } catch (apiError: any) {
-      textbeeResponse = { error: apiError.message || String(apiError) };
-      console.error("Fetch Error:", apiError);
     }
 
-    // Update log entry
-    if (logId) {
-      await supabaseClient
-        .from('sms_logs')
-        .update({
-          status: statusText,
-          provider_response: textbeeResponse
-        })
-        .eq('id', logId)
+    // 4. Update Gateway Usage Count if successful
+    if (isSuccess && successfulGatewayId) {
+      const successfulGateway = gateways.find(g => g.id === successfulGatewayId);
+      if (successfulGateway) {
+        await supabaseClient
+          .from("sms_settings")
+          .update({ usage_count: (successfulGateway.usage_count || 0) + 1 })
+          .eq("id", successfulGatewayId);
+      }
     }
+
+    // 5. Create Log Entry
+    await supabaseClient.from("sms_logs").insert({
+      phone_number: cleanPhone,
+      message,
+      status: statusText,
+      provider_response: apiResponse,
+    });
 
     return new Response(JSON.stringify({ 
       success: isSuccess, 
       status: statusText,
-      response: textbeeResponse 
+      error: isSuccess ? null : lastError,
+      response: apiResponse 
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: isSuccess ? 200 : 500,
