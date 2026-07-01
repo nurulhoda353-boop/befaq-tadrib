@@ -32,12 +32,21 @@ export async function sendConfirmationDetails(regId: string) {
       return { success: false, error: "No phone number found" };
     }
 
-    // 3. Construct SMS Message
+    // 3. Construct SMS Message (use custom template if available)
     const eventTitle = (reg.events as any)?.title || "ইভেন্ট";
-    const customText = (reg.events as any)?.confirmation_sms_template?.trim();
+    const customTemplate = (reg.events as any)?.confirmation_sms_template;
     
-    const bodyText = customText ? customText : "আপনার রেজিস্ট্রেশন সফলভাবে কনফার্ম হয়েছে।";
-    const message = `অভিনন্দন ${name}!\n"${eventTitle}"-এ ${bodyText}\nআপনার আইডি: ${reg.registration_id}`;
+    let message: string;
+    if (customTemplate) {
+      // Replace variables in custom template
+      message = customTemplate
+        .replace(/\{name\}/g, name)
+        .replace(/\{event\}/g, eventTitle)
+        .replace(/\{id\}/g, reg.registration_id || "");
+    } else {
+      // Default message
+      message = `অভিনন্দন ${name}!\n"${eventTitle}"-এ আপনার রেজিস্ট্রেশন সফলভাবে কনফার্ম হয়েছে।\nআপনার আইডি: ${reg.registration_id}`;
+    }
 
     console.log("Sending SMS directly via TextBee to:", phone);
 

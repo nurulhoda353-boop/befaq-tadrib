@@ -593,33 +593,19 @@ function EventFormDialog({
                       <p className="text-[10px] text-muted-foreground">ইউজারদের কনফার্মেশন আইডির শুরুতে এটি যুক্ত হবে (e.g. BEFAQ24-001)</p>
                     </div>
 
-                    <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
-                      <Label className="text-xs">কনফার্মেশন SMS টেমপ্লেট</Label>
-                      
-                      <div className="rounded-md border border-border bg-muted/30 p-3 space-y-2 font-mono text-[13px] leading-relaxed">
-                        <div className="text-muted-foreground select-none flex gap-1">
-                          <span>অভিনন্দন</span>
-                          <span className="bg-gold/20 text-gold-bright px-1 rounded select-none">অংশগ্রহণকারীর_নাম</span>
-                          <span>!</span>
-                        </div>
-                        
-                        <div className="flex gap-1 items-start flex-col sm:flex-row sm:items-center">
-                          <span className="text-muted-foreground select-none">" <span className="bg-gold/20 text-gold-bright px-1 rounded select-none">ইভেন্টের_নাম</span> "-এ</span>
-                          <input
-                            value={confirmationSmsTemplate}
-                            onChange={(e) => setConfirmationSmsTemplate(e.target.value)}
-                            className="flex-1 min-w-[200px] h-7 px-2 rounded border border-border bg-background outline-none focus:border-gold text-foreground"
-                            placeholder="আপনার রেজিস্ট্রেশন সফলভাবে কনফার্ম হয়েছে।"
-                          />
-                        </div>
-                        
-                        <div className="text-muted-foreground select-none flex gap-1">
-                          <span>আপনার আইডি:</span>
-                          <span className="bg-gold/20 text-gold-bright px-1 rounded select-none">রেজিস্ট্রেশন_আইডি</span>
-                        </div>
-                      </div>
-                      <p className="text-[10px] text-muted-foreground">
-                        বক্সে আপনার কাস্টম মেসেজ লিখুন। কালার করা অংশগুলো সিস্টেম অটোমেটিক পূরণ করে নিবে।
+                    <div className="space-y-1.5 animate-in fade-in slide-in-from-top-2">
+                      <Label htmlFor="sms-template" className="text-xs">কনফার্মেশন SMS টেমপ্লেট</Label>
+                      <textarea
+                        id="sms-template"
+                        value={confirmationSmsTemplate}
+                        onChange={(e) => setConfirmationSmsTemplate(e.target.value)}
+                        rows={4}
+                        className="w-full rounded-md border border-border bg-background p-2 text-sm outline-none focus:border-gold font-mono"
+                        placeholder="অভিনন্দন {name}! {event}-এ আপনার রেজিস্ট্রেশন কনফার্ম হয়েছে। আইডি: {id}"
+                      />
+                      <p className="text-[10px] text-muted-foreground leading-relaxed">
+                        আপনি যেকোনো লেখা পরিবর্তন করতে পারবেন (যেমন: 'অভিনন্দন' এর বদলে 'স্বাগতম' লিখতে পারবেন)।<br/>
+                        শুধু খেয়াল রাখবেন <code className="bg-muted px-1 rounded text-gold-bright">{'{name}'}</code>, <code className="bg-muted px-1 rounded text-gold-bright">{'{event}'}</code>, এবং <code className="bg-muted px-1 rounded text-gold-bright">{'{id}'}</code> লেখাগুলো যেন মুছে না যায়। এগুলো সিস্টেম অটোমেটিক পূরণ করবে।
                       </p>
                     </div>
 
