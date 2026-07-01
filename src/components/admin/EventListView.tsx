@@ -352,6 +352,83 @@ export function EventListView({ tabs }: { tabs: React.ReactNode }) {
   );
 }
 
+// -------------------- Template Editor --------------------
+function TemplateEditor({ value, onChange }: { value: string; onChange: (val: string) => void }) {
+  const editorRef = useRef<HTMLDivElement>(null);
+  const [isFocused, setIsFocused] = useState(false);
+
+  // Convert raw text to HTML with locked chips
+  const formatToHtml = (text: string) => {
+    let html = text
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/\n/g, "<br>");
+      
+    html = html.replace(/\{name\}/g, '<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-medium bg-gold/20 text-gold-bright select-none mx-0.5 cursor-not-allowed" contenteditable="false" data-var="{name}">অংশগ্রহণকারীর নাম</span>');
+    html = html.replace(/\{event\}/g, '<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-medium bg-gold/20 text-gold-bright select-none mx-0.5 cursor-not-allowed" contenteditable="false" data-var="{event}">ইভেন্টের নাম</span>');
+    html = html.replace(/\{id\}/g, '<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-medium bg-gold/20 text-gold-bright select-none mx-0.5 cursor-not-allowed" contenteditable="false" data-var="{id}">আইডি নং</span>');
+    return html;
+  };
+
+  // Convert HTML back to raw text
+  const parseFromHtml = (html: string) => {
+    const temp = document.createElement("div");
+    temp.innerHTML = html;
+    
+    // Replace spans with their data-var
+    const spans = temp.querySelectorAll('span[data-var]');
+    spans.forEach(span => {
+      const varName = span.getAttribute('data-var');
+      if (varName) {
+        span.replaceWith(varName);
+      }
+    });
+
+    // Replace br with newline
+    let text = temp.innerHTML.replace(/<br\s*[\/]?>/gi, "\n");
+    // Decode HTML entities
+    const decoder = document.createElement("textarea");
+    decoder.innerHTML = text;
+    return decoder.value;
+  };
+
+  // Set initial content only once to avoid cursor jumping
+  useEffect(() => {
+    if (editorRef.current && !editorRef.current.innerHTML) {
+      editorRef.current.innerHTML = formatToHtml(value || "অভিনন্দন {name}!\n\"{event}\"-এ আপনার রেজিস্ট্রেশন কনফার্ম হয়েছে।\nআপনার আইডি: {id}");
+      // If value is empty, update parent with default
+      if (!value) {
+        onChange("অভিনন্দন {name}!\n\"{event}\"-এ আপনার রেজিস্ট্রেশন কনফার্ম হয়েছে।\nআপনার আইডি: {id}");
+      }
+    }
+  }, []);
+
+  const handleInput = () => {
+    if (editorRef.current) {
+      const newText = parseFromHtml(editorRef.current.innerHTML);
+      onChange(newText);
+    }
+  };
+
+  return (
+    <div 
+      className={`w-full min-h-[100px] rounded-md border p-3 text-sm bg-background font-mono leading-relaxed transition-colors ${isFocused ? 'border-gold ring-1 ring-gold' : 'border-border'}`}
+      onClick={() => editorRef.current?.focus()}
+    >
+      <div
+        ref={editorRef}
+        contentEditable
+        onFocus={() => setIsFocused(true)}
+        onBlur={() => setIsFocused(false)}
+        onInput={handleInput}
+        className="outline-none whitespace-pre-wrap"
+        style={{ caretColor: 'currentColor' }}
+      />
+    </div>
+  );
+}
+
 // -------------------- Form Dialog --------------------
 
 function EventFormDialog({
@@ -594,18 +671,13 @@ function EventFormDialog({
                     </div>
 
                     <div className="space-y-1.5 animate-in fade-in slide-in-from-top-2">
-                      <Label htmlFor="sms-template" className="text-xs">কনফার্মেশন SMS টেমপ্লেট</Label>
-                      <textarea
-                        id="sms-template"
-                        value={confirmationSmsTemplate}
-                        onChange={(e) => setConfirmationSmsTemplate(e.target.value)}
-                        rows={4}
-                        className="w-full rounded-md border border-border bg-background p-2 text-sm outline-none focus:border-gold font-mono"
-                        placeholder="অভিনন্দন {name}! {event}-এ আপনার রেজিস্ট্রেশন কনফার্ম হয়েছে। আইডি: {id}"
+                      <Label className="text-xs">কনফার্মেশন SMS টেমপ্লেট</Label>
+                      <TemplateEditor 
+                        value={confirmationSmsTemplate} 
+                        onChange={setConfirmationSmsTemplate} 
                       />
-                      <p className="text-[10px] text-muted-foreground leading-relaxed">
-                        আপনি যেকোনো লেখা পরিবর্তন করতে পারবেন (যেমন: 'অভিনন্দন' এর বদলে 'স্বাগতম' লিখতে পারবেন)।<br/>
-                        শুধু খেয়াল রাখবেন <code className="bg-muted px-1 rounded text-gold-bright">{'{name}'}</code>, <code className="bg-muted px-1 rounded text-gold-bright">{'{event}'}</code>, এবং <code className="bg-muted px-1 rounded text-gold-bright">{'{id}'}</code> লেখাগুলো যেন মুছে না যায়। এগুলো সিস্টেম অটোমেটিক পূরণ করবে।
+                      <p className="text-[10px] text-muted-foreground leading-relaxed mt-1">
+                        কালার করা অংশগুলো (নাম, ইভেন্ট, আইডি) সম্পূর্ণ লক করা আছে, এগুলোতে হাত দেওয়া যাবে না। বাকি যেকোনো লেখা আপনি ইচ্ছেমতো এডিট বা ডিলিট করতে পারবেন।
                       </p>
                     </div>
 
