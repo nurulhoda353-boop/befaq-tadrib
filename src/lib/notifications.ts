@@ -78,11 +78,10 @@ export async function sendDirectSms(phone: string, message: string) {
       if (!gateway.api_key) continue;
 
       try {
-        if (gateway.provider === "textbee" || gateway.provider === "owntext") {
+        if (gateway.provider === "textbee") {
           if (!gateway.device_id) continue;
           
-          const baseUrl = gateway.provider === "owntext" ? "https://owntext.vercel.app" : "https://api.textbee.dev";
-          const apiUrl = `${baseUrl}/api/v1/gateway/devices/${gateway.device_id}/send-sms`;
+          const apiUrl = `https://api.textbee.dev/api/v1/gateway/devices/${gateway.device_id}/send-sms`;
           
           let res = await fetch(apiUrl, {
             method: "POST",
@@ -113,9 +112,49 @@ export async function sendDirectSms(phone: string, message: string) {
             successfulGatewayId = gateway.id;
             break; // Stop loop, SMS sent successfully
           } else {
-            lastError = `${gateway.provider} (${gateway.name}): ${responseText}`;
+            lastError = `TextBee (${gateway.name}): ${responseText}`;
             console.error(lastError);
             continue; // Try next gateway
+          }
+        }
+        else if (gateway.provider === "owntext") {
+          if (!gateway.device_id) continue;
+          
+          const apiUrl = `https://owntext.vercel.app/api/v1/send`;
+          
+          let res = await fetch(apiUrl, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${gateway.api_key}`,
+            },
+            body: JSON.stringify({
+              recipient: cleanPhone,
+              message: message,
+              device_id: gateway.device_id
+            }),
+          }).catch(async (e) => {
+            // CORS Fallback for local dev
+            console.log("CORS issue, trying proxy...");
+            return fetch(`https://corsproxy.io/?url=${encodeURIComponent(apiUrl)}`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json", "Authorization": `Bearer ${gateway.api_key}` },
+              body: JSON.stringify({ recipient: cleanPhone, message: message, device_id: gateway.device_id }),
+            });
+          });
+
+          const responseText = await res.text();
+          try { apiResponse = JSON.parse(responseText); } catch(e) { apiResponse = { raw: responseText }; }
+
+          if (res.ok) {
+            isSuccess = true;
+            statusText = "sent";
+            successfulGatewayId = gateway.id;
+            break; 
+          } else {
+            lastError = `OwnText (${gateway.name}): ${responseText}`;
+            console.error(lastError);
+            continue; 
           }
         } 
         else if (gateway.provider === "smsnetbd") {
@@ -154,9 +193,7 @@ export async function sendDirectSms(phone: string, message: string) {
             continue;
           }
         }
-        else if (gateway.provider === "bulksmsbd" || gateway.provider === "greenweb" || gateway.provider === "other") {
-          // Placeholder for other BD Bulk SMS APIs. Usually they are simple GET requests.
-          // e.g. BulkSmsBD
+        else if (gateway.provider === "bulksmsbd") {
           const senderId = gateway.sender_id || "";
           const url = `http://bulksmsbd.net/api/smsapi?api_key=${gateway.api_key}&type=text&number=${cleanPhone.replace('+88', '')}&senderid=${senderId}&message=${encodeURIComponent(message)}`;
           
@@ -167,14 +204,34 @@ export async function sendDirectSms(phone: string, message: string) {
           const responseText = await res.text();
           apiResponse = { raw: responseText };
 
-          // Typically they return something with success code
           if (res.ok && !responseText.toLowerCase().includes("error")) {
             isSuccess = true;
             statusText = "sent";
             successfulGatewayId = gateway.id;
             break;
           } else {
-            lastError = `Bulk API (${gateway.name}): ${responseText}`;
+            lastError = `BulkSMS BD (${gateway.name}): ${responseText}`;
+            console.error(lastError);
+            continue;
+          }
+        }
+        else if (gateway.provider === "greenweb") {
+          const url = `http://api.greenweb.com.bd/api.php?token=${gateway.api_key}&to=${cleanPhone}&message=${encodeURIComponent(message)}`;
+          
+          const res = await fetch(url).catch(async () => {
+             return fetch(`https://corsproxy.io/?url=${encodeURIComponent(url)}`);
+          });
+
+          const responseText = await res.text();
+          apiResponse = { raw: responseText };
+
+          if (res.ok && !responseText.toLowerCase().includes("error")) {
+            isSuccess = true;
+            statusText = "sent";
+            successfulGatewayId = gateway.id;
+            break;
+          } else {
+            lastError = `GreenWeb (${gateway.name}): ${responseText}`;
             console.error(lastError);
             continue;
           }

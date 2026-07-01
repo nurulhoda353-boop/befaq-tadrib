@@ -277,10 +277,6 @@ function AdminSMS() {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>গেটওয়ের নাম</Label>
-              <Input value={newGateway.name} onChange={e => setNewGateway({...newGateway, name: e.target.value})} placeholder="e.g. GP SIM 1 / BulkBD Account" />
-            </div>
-            <div className="space-y-2">
               <Label>API Key</Label>
               <Input type="password" value={newGateway.api_key} onChange={e => setNewGateway({...newGateway, api_key: e.target.value})} placeholder="API Key or Token" />
             </div>
@@ -299,7 +295,10 @@ function AdminSMS() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsAddOpen(false)}>Cancel</Button>
-            <Button onClick={() => addGatewayMut.mutate(newGateway)} disabled={addGatewayMut.isPending || !newGateway.api_key || !newGateway.name}>
+            <Button 
+              onClick={() => addGatewayMut.mutate({...newGateway, name: newGateway.name || newGateway.provider.toUpperCase()})} 
+              disabled={addGatewayMut.isPending || !newGateway.api_key}
+            >
               {addGatewayMut.isPending ? "অ্যাড হচ্ছে..." : "অ্যাড করুন"}
             </Button>
           </DialogFooter>
