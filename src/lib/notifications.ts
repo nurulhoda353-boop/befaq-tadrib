@@ -9,7 +9,7 @@ export async function sendConfirmationDetails(regId: string) {
     // 1. Fetch registration details
     const { data: reg, error: fetchErr } = await supabase
       .from("event_registrations")
-      .select("registration_id, form_data, event_id, events(title)")
+      .select("registration_id, form_data, event_id, events(title, confirmation_sms_template)")
       .eq("id", regId)
       .single();
 
@@ -32,9 +32,21 @@ export async function sendConfirmationDetails(regId: string) {
       return { success: false, error: "No phone number found" };
     }
 
-    // 3. Construct SMS Message
+    // 3. Construct SMS Message (use custom template if available)
     const eventTitle = (reg.events as any)?.title || "ইভেন্ট";
-    const message = `অভিনন্দন ${name}!\n"${eventTitle}"-এ আপনার রেজিস্ট্রেশন সফলভাবে কনফার্ম হয়েছে।\nআপনার আইডি: ${reg.registration_id}`;
+    const customTemplate = (reg.events as any)?.confirmation_sms_template;
+    
+    let message: string;
+    if (customTemplate) {
+      // Replace variables in custom template
+      message = customTemplate
+        .replace(/\{name\}/g, name)
+        .replace(/\{event\}/g, eventTitle)
+        .replace(/\{id\}/g, reg.registration_id || "");
+    } else {
+      // Default message
+      message = `অভিনন্দন ${name}!\n"${eventTitle}"-এ আপনার রেজিস্ট্রেশন সফলভাবে কনফার্ম হয়েছে।\nআপনার আইডি: ${reg.registration_id}`;
+    }
 
     console.log("Sending SMS directly via TextBee to:", phone);
 

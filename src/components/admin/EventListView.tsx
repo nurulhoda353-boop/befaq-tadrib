@@ -63,6 +63,7 @@ interface EventItem {
   form_schema: FormFieldSchema[];
   reg_prefix: string | null;
   created_at: string;
+  confirmation_sms_template?: string | null;
   show_emergency_contact?: boolean;
   emergency_contact_title?: string | null;
   emergency_contact_description?: string | null;
@@ -378,6 +379,7 @@ function EventFormDialog({
   // Registration specific fields
   const [hasRegistration, setHasRegistration] = useState(event?.has_registration ?? false);
   const [regPrefix, setRegPrefix] = useState(event?.reg_prefix ?? "");
+  const [confirmationSmsTemplate, setConfirmationSmsTemplate] = useState(event?.confirmation_sms_template ?? "");
   const [formSchema, setFormSchema] = useState<FormFieldSchema[]>(event?.form_schema ?? []);
 
   // Emergency contact fields
@@ -415,6 +417,7 @@ function EventFormDialog({
       date: date ? new Date(date).toISOString() : null,
       has_registration: hasRegistration,
       reg_prefix: regPrefix.trim() || null,
+      confirmation_sms_template: confirmationSmsTemplate.trim() || null,
       form_schema: formSchema,
       slug: isEdit ? event.slug : generateSlug(title), // Only generate new slug if creating
       show_emergency_contact: showEmergencyContact,
@@ -588,6 +591,21 @@ function EventFormDialog({
                         placeholder="যেমন: BEFAQ24"
                       />
                       <p className="text-[10px] text-muted-foreground">ইউজারদের কনফার্মেশন আইডির শুরুতে এটি যুক্ত হবে (e.g. BEFAQ24-001)</p>
+                    </div>
+
+                    <div className="space-y-1.5 animate-in fade-in slide-in-from-top-2">
+                      <Label htmlFor="sms-template" className="text-xs">কনফার্মেশন SMS টেমপ্লেট</Label>
+                      <textarea
+                        id="sms-template"
+                        value={confirmationSmsTemplate}
+                        onChange={(e) => setConfirmationSmsTemplate(e.target.value)}
+                        rows={3}
+                        className="w-full rounded-md border border-border bg-background p-2 text-sm outline-none focus:border-gold"
+                        placeholder="অভিনন্দন {name}! {event}-এ আপনার রেজিস্ট্রেশন কনফার্ম হয়েছে। আইডি: {id}"
+                      />
+                      <p className="text-[10px] text-muted-foreground">
+                        ভ্যারিয়েবল: <code className="bg-muted px-1 rounded">{'{name}'}</code> = অংশগ্রহণকারীর নাম, <code className="bg-muted px-1 rounded">{'{event}'}</code> = ইভেন্টের নাম, <code className="bg-muted px-1 rounded">{'{id}'}</code> = রেজিস্ট্রেশন আইডি। খালি রাখলে ডিফল্ট মেসেজ যাবে।
+                      </p>
                     </div>
 
                     <div className="space-y-3 pt-4 border-t border-gold/10 animate-in fade-in slide-in-from-top-2">
