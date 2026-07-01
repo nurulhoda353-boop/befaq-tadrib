@@ -20,8 +20,12 @@ export async function sendConfirmationDetails(regId: string) {
 
     // 2. Extract phone number and name from form_data
     const formData = (reg.form_data as Record<string, any>) || {};
-    const phone = formData["মোবাইল নাম্বার"] || formData["মোবাইল"] || formData["ফোন"] || formData["Phone"] || formData["Mobile"];
-    let name = formData["নাম"] || formData["Name"] || formData["আপনার নাম"] || "অংশগ্রহণকারী";
+    const keys = Object.keys(formData);
+    const phoneKey = keys.find((k) => k.toLowerCase().includes("মোবাইল") || k.toLowerCase().includes("ফোন") || k.toLowerCase().includes("phone") || k.toLowerCase().includes("mobile"));
+    const phone = phoneKey ? formData[phoneKey] : null;
+    
+    const nameKey = keys.find((k) => k.toLowerCase().includes("নাম") || k.toLowerCase().includes("name"));
+    let name = nameKey ? formData[nameKey] : "অংশগ্রহণকারী";
 
     if (!phone) {
       console.log("No phone number found in form data for SMS. Skipping.");
